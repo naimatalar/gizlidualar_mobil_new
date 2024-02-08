@@ -1,0 +1,7 @@
+import LangApp from "../components/Language"
+
+export function passwordValidator(password) {
+  if (!password) return LangApp("Passwordcantbeempty")
+  if (password.length < 5) return 'Password must be at least 5 characters long.'
+  return ''
+}

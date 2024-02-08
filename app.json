@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Gizli Dualar",
+    "slug": "gizli-dualar",
+    "version": "1.0.5",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gizldualarapplication.gizlidualar",
+      "buildNumber": "5"
+    },
+    "android": {
+      "versionCode": 5,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.gizldualarapplication.gizlidualar"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6c6045d8-7425-41d9-993b-9be2998e9f2a"
+      }
+    },
+    "plugins": [
+      "expo-localization",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "$(PRODUCT_NAME) telefon numaranıza erişip doğrulamak istiyor."
+        }
+      ]
+    ]
+  }
+}
