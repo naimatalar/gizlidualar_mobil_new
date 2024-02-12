@@ -71,8 +71,8 @@ function Detail(props) {
                 }}
             >
                 {dua.map((item, key) => {
-
-                    let isUnlocked = unlockedDua.find(x => { return x == item.id })
+    //  console.log(item.imageUrl)
+                    let isUnlocked = unlockedDua?.find(x => { return x == item.id })
 
                     return <TouchableOpacity key={key} style={{
                         flexDirection: "row",

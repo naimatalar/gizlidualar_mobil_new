@@ -91,8 +91,14 @@ const Steps = (props) => {
                 setLoadinCoinSuccess(false);
                 setCoinSuccess(true);
 
-                setTimeout(() => {
+                setTimeout(async () => {
+
                     setCoinSuccess(false);
+                    var endpoint2 = await apiConstant.BaseUrl + `/api/usermanager/GetCurrentMobilUser`
+                    var rps2 = await GetAxios(endpoint2).then(x => { return x.data }).catch(x => { return x });
+
+                    props.setCoin(rps2.data.coin)
+                    props.changeUser({ UserData: rps2.data })
                 }, 3100);
 
             }, 2100);
@@ -103,11 +109,7 @@ const Steps = (props) => {
             setCurrentPosition(0)
             start();
 
-            var endpoint2 = await apiConstant.BaseUrl + `/api/usermanager/GetCurrentMobilUser`
-            var rps2 = await GetAxios(endpoint2).then(x => { return x.data }).catch(x => { return x });
 
-       props.setCoin(rps2.data.coin)
-            props.changeUser({ UserData: rps2.data })
 
 
         }
@@ -120,7 +122,7 @@ const Steps = (props) => {
         var endpoint = await apiConstant.BaseUrl + "/api/dualar/GetSteps"
         var rps = await PostAxios(endpoint, { duaId: props.route.params.item.id }).then(x => { return x.data }).catch(x => { return x });
         setResizeGif(true)
-        let vrLabel = [] 
+        let vrLabel = []
 
         setStepLength(rps.data.stepCount)
         setSozluk(rps.data.sozluk)
@@ -311,7 +313,7 @@ const Steps = (props) => {
                     <Dialog.Content>
                         <View>
                             <Text style={{ fontWeight: "bold", fontSize: 18, color: "red" }}>Kilit Açılamadı</Text>
-                            <Text style={{ fontWeight: "bold", fontSize: 15, color: "black", marginTop: 15 }}>Yeterli anahtarınız bulunmumuyor. {duaCoin-props.UserData?.data.coin} adet anahtara daha ihtiyacınız var </Text>
+                            <Text style={{ fontWeight: "bold", fontSize: 15, color: "black", marginTop: 15 }}>Yeterli anahtarınız bulunmumuyor. {duaCoin - props.UserData?.data.coin} adet anahtara daha ihtiyacınız var </Text>
 
                             <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginTop: 30, paddingBottom: 5 }}>
                                 <TouchableOpacity onPress={() => { setAlertDialog(false); props.navigation.navigate('Coin') }} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Anahtar Al</Text></TouchableOpacity>

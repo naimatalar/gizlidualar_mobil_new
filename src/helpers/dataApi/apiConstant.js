@@ -1,7 +1,7 @@
 import { GetAxiosAnonym } from "./crud";
 
 // const baseUrl = 'http://192.168.0.14:5001';
-const baseUrl = 'http://91.151.89.180:8888';
+const baseUrl = 'https://sda.detambilgislem.biz.tr';
  
 const apiConstant = {
     IMAGEBASEURL: baseUrl + '/root/upload',

@@ -20,10 +20,12 @@ const User = (props) => {
     const start = async () => {
         var endpoint = await apiConstant.BaseUrl + `/api/usermanager/GetCurrentMobilUser`
         var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
-        if (rps.data) {
+        if (rps.data) { 
+             
             setUSerData(rps.data)
             if (!props.UserData?.data) {
                 props.changeUser({ UserData: rps.data })
+              
             }
 
         }
@@ -35,14 +37,14 @@ const User = (props) => {
             <View style={{ flex: 1 }}>
 
                 <LinearGradient start={{ x: 0.0, y: 1.0 }} style={{ padding: 7 }} colors={['#4c669f', 'transparent']} >
-                    <Text style={{ fontWeight: "bold", fontSize: 20, color: "white" }}>Profil Bilgilerim</Text>
+                    <Text style={{ fontWeight: "bold", fontSize: 20, color: "white" }}>Bilgilerim</Text>
                 </LinearGradient>
 
             </View>
             <View style={{ flex: 11 }}>
                 <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 15, flex: 1 }}>
-                    <Text style={{ fontWeight: "bold", fontSize: 17 }}>Kullanıcı Adı: </Text>
-                    <Text style={{ fontSize: 17 }}>{userData.firstName} </Text>
+                    <Text style={{ fontWeight: "bold", fontSize: 17 }}>E-mail: </Text>
+                    <Text style={{ fontSize: 17 }}>{userData.email} </Text>
                 </View>
                 <View style={{ flexDirection: "row", justifyContent: "center", flex: 1 }}>
                     <Text style={{ fontWeight: "bold", fontSize: 17 }}>Telefon: </Text>
@@ -53,14 +55,14 @@ const User = (props) => {
                         <Text style={{ fontWeight: "bold", fontSize: 20, color: "white", backgroundColor: "orange", padding: 5 }}>Anahtar Sayısı: {userData.coin} </Text>
 
                     </View>
-                    <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 3, marginBottom: 15 }}>
-                        <Text style={{ fontWeight: "bold", color: "orange" }}>Anahtarlar duaların kilidini açar</Text>
+                    <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 15, marginBottom: 15 }}>
+                        <Text style={{ fontWeight: "bold", color: "#4c669f",fontStyle:"italic" }}>Anahtarlar duaların kilidini açar</Text>
 
                     </View>
                 </View>
-                <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 15, marginBottom: 10 }}>
+                <View style={{ flexDirection: "row", justifyContent: "center",backgroundColor:"#4c669f", marginTop: 15,padding:5 }}>
 
-                    <Text style={{ fontSize: 20, color: "#4c669f", fontWeight: "bold" }}>Kilidini Kaldırdığınız Dualar</Text>
+                    <Text style={{ fontSize: 20, color: "white", fontWeight: "bold" }}>Kilidini Kaldırdığınız Dualar</Text>
 
                 </View>
 
@@ -101,7 +103,7 @@ const User = (props) => {
                         })}
                         {userData.dualarLaboteUsers?.length == 0 &&
                             <View style={{justifyContent:"center",marginTop:15,backgroundColor:"#fafafa69",paddingBottom:15,paddingTop:15}}>
-                                <Text style={{textAlign:"center",fontSize:17,color:"#E65100"}}>Henüz kilidini açtığınız bir dua bulunmuyor</Text>
+                                <Text style={{textAlign:"center",fontSize:17,color:"red",fontWeight:"bold"}}>Henüz kilidini açtığınız bir dua bulunmuyor</Text>
                             </View>}
                     </ScrollView>
 

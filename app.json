@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gizli Dualar",
     "slug": "gizli-dualar",
-    "version": "1.0.5",
+    "version": "1.9.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -19,10 +19,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gizldualarapplication.gizlidualar",
-      "buildNumber": "5"
+      "buildNumber": "9"
     },
     "android": {
-      "versionCode": 5,
+      "versionCode": 9,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

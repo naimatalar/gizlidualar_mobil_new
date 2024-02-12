@@ -17,81 +17,68 @@ function SignIn(props) {
     const [inputCode, setInputCode] = useState()
     const [visible, setVisible] = React.useState(false);
     const [isLogin, setIsLogin] = React.useState(false);
-    const [createUser, setCreateUser] = React.useState({ email: "", phoneNumber, firstName: "", lastName: "" });
+    const [createUser, setCreateUser] = React.useState({ email: "", phoneNumber, password: "", password2: "" });
     const [existUser, setExistUSer] = React.useState(false);
     const [accessGranted, setAccessGranted] = React.useState(false);
+    const [password, setPassword] = React.useState();
 
+    const [telTry, setTelTry] = React.useState(0);
 
 
     const showModal = () => setVisible(true);
     const hideModal = () => setVisible(false);
 
 
-    const pkg = Constants.expoConfig.releaseChannel
-        ? Constants.expoConfig.android.package
-        : 'host.exp.exponent'
+    // const pkg = Constants.expoConfig.releaseChannel
+    //     ? Constants.expoConfig.android.package
+    //     : 'host.exp.exponent'
 
-    const openAppSettings = () => {
-        if (Platform.OS === 'ios') {
-            Linking.openURL('app-settings:')
-        } else {
-            IntentLauncher.startActivityAsync(
-                IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS,
-                { data: 'package:' + pkg },
-            )
-        }
-        
-    }
+    // const openAppSettings = () => {
+    //     if (Platform.OS === 'ios') {
+    //         Linking.openURL('app-settings:')
+    //     } else {
+    //         IntentLauncher.startActivityAsync(
+    //             IntentLauncher.ActivityAction.APPLICATION_DETAILS_SETTINGS,
+    //             { data: 'package:' + "com.gizldualarapplication.gizlidualar" },
+    //         )
+    //     }
+
+    // }
 
     useEffect(() => {
 
-        accesContact()
+        // accesContact()
     }, []);
 
-    const accesContact = () => {
-        (async () => {
 
-            const { status } = await Contacts.requestPermissionsAsync();
-
-
-
-            if (status === 'granted') {
-                const { data } = await Contacts.getContactsAsync({
-                    fields: [Contacts.Fields.PhoneNumbers],
-
-                });
-                setAccessGranted(true)
-                if (data.length > 0) {
-                    const contact = data[0];
-
-                    setPhoneNumber(contact.phoneNumbers[0].number)
-                    setCreateUser((d) => { return { ...d, phoneNumber: contact.phoneNumbers[0].number } })
-                }
-            } else {
-                // openAppSettings()
-            }
-        })();
-    }
 
     const authCode = async () => {
 
         var endpoint = await apiConstant.BaseUrl + `/api/Auth/GetPhoneCode/${phoneNumber}`
         var rps = await GetAxiosAnonym(endpoint).then(x => { return x.data }).catch(x => { return x });
         setTempCode(rps.data)
-        if (rps.data) {
+        if (!rps.isError) {
             // showModal() //düzeltilecek
-            getToken(rps.data)
+            getToken(createUser.password, createUser.phoneNumber)
         }
     }
-    const getToken = async (temp) => {
+    const getToken = async (pass, nm) => {
         let tm;
-        if (temp) {
-            tm = temp
+        let num;
+        if (pass) {
+            tm = pass
         } else {
-            tm = inputCode
+            tm = password
         }
+        if (nm) {
+            num = nm
+        } else {
+            num = phoneNumber
+        }
+
+
         var endpoint = await apiConstant.BaseUrl + `/api/Auth/Login`
-        var rps = await PostAxiosAnonym(endpoint, { phoneNumber: phoneNumber, code: tm }).then(x => { return x.data }).catch(x => { return x });
+        var rps = await PostAxiosAnonym(endpoint, { phoneNumber: num, password: tm }).then(x => { return x.data }).catch(x => { return x });
 
         if (rps.data?.error == false) {
 
@@ -102,11 +89,18 @@ function SignIn(props) {
 
 
         } else {
-            Alert.alert("Hata", "Sms Kodu hatalı. Tekrar deneyiniz.")
+            Alert.alert("Hata", "Giriş bilgileri hatalı.")
         }
 
     }
     const createUserForm = async () => {
+
+        // if (telTry == 0) {
+            
+        //     setCreateUser((d) => { return { ...d, phoneNumber: "" } })
+        //     setTelTry(1)
+        //     return false
+        // }
 
         var endpoint = await apiConstant.BaseUrl + `/api/Auth/SignUp`
         var rps = await PostAxiosAnonym(endpoint, createUser).then(x => { return x.data }).catch(x => { return x });
@@ -114,13 +108,18 @@ function SignIn(props) {
         if (rps.isError == false) {
             // setVisible(true) Düzeltilecek
             setTempCode(rps.data.gecici)
-            getToken(rps.data.gecici)
+            // getToken(createUser.password,createUser.phoneNumber)
+            Alert.alert("Başarılı", "Kayıt başarılı giriş yapabilirsiniz.")
+            setIsLogin(true)
 
         } else {
             setExistUSer(true)
         }
     }
-
+    const validateEmail = (email) => {
+        var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(email);
+    };
     return (
 
         <View style={{ flex: 1 }}>
@@ -160,33 +159,58 @@ function SignIn(props) {
                     <Text style={{ textAlign: "center", fontWeight: "bold" }}>Giriş Yapmak İçin Telefon Numaranızı Giriniz</Text>
                 </View>
                 <View style={{ flexDirection: "column", width: "70%", alignSelf: "center" }}>
-                    <View style={{ backgroundColor: "#AD1457", width: "100%", padding: 7, borderRadius: 10 }}>
-                        <FloatingLabelInput
-                            label="Telefon"
-                            keyboardType='numeric'
-                            hintTextColor={'#aaa'}
-                            maskType='phone'
-                            value={phoneNumber}
-                            onFocus={() => { accesContact();!phoneNumber && openAppSettings() }}
-                            mask="999 999 99 99"
-                            hint="534 000 00 00"
-                            onChangeText={(val) => { setPhoneNumber(phoneNumber) }}
-                            containerStyles={{
-                                borderWidth: 2,
-                                paddingHorizontal: 10,
-                                backgroundColor: '#fff',
-                                borderColor: 'blue',
-                                borderRadius: 8,
-                                height: 50,
-                                marginTop: 10
-                            }}
-                            inputStyles={{
-                                color: 'blue',
-                                paddingHorizontal: 10,
-                            }}
-                        />
-                        <Text style={{ fontSize: 13, textAlign: "center", color: "white", marginTop: 5 }}>Gerçek kişi olduğunuzu doğrulamamız için "Kişiler/İletişim" izni veriniz</Text>
+                <View style={{backgroundColor:"#AD1457",padding:10,borderRadius:10,marginBottom:5}}>
+                <Text style={{color:"white",marginBottom:3,fontWeight:"bold",margin:5}}>Telefon numarası giriş için gerekli</Text>
+                    <FloatingLabelInput
+                        label="Telefon"
+                        keyboardType='numeric'
+                        hintTextColor={'#aaa'}
+                        maskType='phone'
+                        value={phoneNumber}
+                        mask="999 999 99 99"
+                        hint="534 000 00 00"
+                        onChangeText={(val) => { ; setPhoneNumber(val) }}
+                        containerStyles={{
+                            borderWidth: 2,
+                            paddingHorizontal: 10,
+                            backgroundColor: '#fff',
+                            borderColor: 'blue',
+                            borderRadius: 8,
+                            height: 50,
+                            marginTop: 10
+                        }}
+                        inputStyles={{
+                            color: 'blue',
+                            paddingHorizontal: 10,
+                        }}
+                    />
                     </View>
+
+                    <FloatingLabelInput
+                        label="Şifre"
+                        keyboardType="text"
+                        hintTextColor={'#aaa'}
+
+                        value={password}
+                        onChangeText={(val) => { setPassword(val); }}
+                        isPassword={true}
+                        showPasswordContainerStyles={{ backgroundColor: "#388E3C", borderRadius: 5 }}
+                        containerStyles={{
+                            borderWidth: 2,
+                            paddingHorizontal: 10,
+                            backgroundColor: '#fff',
+                            borderColor: 'blue',
+                            borderRadius: 8,
+                            height: 50,
+                            marginTop: 10
+
+                        }}
+                        inputStyles={{
+                            color: 'blue',
+                            paddingHorizontal: 10,
+                        }}
+                    />
+
                 </View>
                 <TouchableOpacity onPress={() => { authCode() }} style={{
                     borderWidth: 1, borderColor: "#fe7013", borderStyle: "solid", width: "70%", height: 50,
@@ -220,28 +244,7 @@ function SignIn(props) {
                         <Text style={{ textAlign: "center", fontWeight: "bold" }}>Kayıt Formu</Text>
                     </View>
                     <View style={{ flexDirection: "column", width: "70%", alignSelf: "center" }}>
-                        <FloatingLabelInput
-                            label="Kullanici Adi"
-                            keyboardType='text'
-                            hintTextColor={'#aaa'}
-                            // maskType='email'
-                            value={createUser.firstName}
-                            onChangeText={(val) => { setCreateUser((d) => { return { ...d, firstName: val, lastName: val } }) }}
-                            containerStyles={{
-                                borderWidth: 2,
-                                paddingHorizontal: 10,
-                                backgroundColor: '#fff',
-                                borderColor: 'blue',
-                                borderRadius: 8,
-                                height: 50,
-                                marginBottom: 5
-                            }}
-                            inputStyles={{
-                                color: 'blue',
-                                paddingHorizontal: 10,
 
-                            }}
-                        />
 
                         <FloatingLabelInput
                             label="Email"
@@ -256,7 +259,7 @@ function SignIn(props) {
                                 borderColor: 'blue',
                                 borderRadius: 8,
                                 height: 50,
-                                marginBottom: 5
+                                marginBottom: 10
                             }}
                             inputStyles={{
                                 color: 'blue',
@@ -264,33 +267,83 @@ function SignIn(props) {
 
                             }}
                         />
-                        <View style={{ backgroundColor: "#AD1457", width: "100%", padding: 7, borderRadius: 10 }}>
-                            <FloatingLabelInput
-                                label="Telefon"
-                                keyboardType='numeric'
-                                hintTextColor={'#aaa'}
-                                maskType='phone'
-                                value={phoneNumber}
-                                onChangeText={(val) => { setCreateUser((d) => { return { ...d, phoneNumber: phoneNumber } }); setPhoneNumber(phoneNumber) }}
-                                onFocus={() => { accesContact();!phoneNumber && openAppSettings() }}
-                                mask="9999 999 99 99"
-                                hint="0534 000 00 00"
-                                containerStyles={{
-                                    borderWidth: 2,
-                                    paddingHorizontal: 10,
-                                    backgroundColor: '#fff',
-                                    borderColor: 'blue',
-                                    borderRadius: 8,
-                                    height: 50,
+                        <View style={{backgroundColor:"#AD1457",padding:5,borderRadius:10,marginBottom:10}}>
+                         <Text style={{color:"white",marginBottom:3,fontWeight:"bold",margin:5}}>Telefon numarası giriş için gerekli</Text>
+                        <FloatingLabelInput
+                            label="Telefon"
+                            keyboardType='numeric'
+                            hintTextColor={'#aaa'}
+                            maskType='phone'
+                            value={createUser.phoneNumber}
+                            onChangeText={(val) => { setCreateUser((d) => { return { ...d, phoneNumber: val } }); setPhoneNumber(val) }}
+                            mask="999 999 99 99"
+                            hint="534 000 00 00"
+                            containerStyles={{
+                                borderWidth: 2,
+                                paddingHorizontal: 10,
+                                backgroundColor: '#fff',
+                                borderColor: 'blue',
+                                borderRadius: 8,
+                                height: 50,
+                                marginBottom: 10,
+                                
 
-                                }}
-                                inputStyles={{
-                                    color: 'blue',
-                                    paddingHorizontal: 10,
-                                }}
-                            />
-                            <Text style={{ fontSize: 13, textAlign: "center", color: "white", marginTop: 5 }}>Gerçek kişi olduğunuzu doğrulamamız için "Kişiler/İletişim" izni veriniz</Text>
-                        </View>
+                            }}
+                            inputStyles={{
+                                color: 'blue',
+                                paddingHorizontal: 10,
+                              
+                            }}
+                        />
+                      </View>
+                        <FloatingLabelInput
+                            label="Şifre"
+                            keyboardType="text"
+                            hintTextColor={'#aaa'}
+
+                            value={createUser.password}
+                            onChangeText={(val) => { setCreateUser((d) => { return { ...d, password: val } }); }}
+                            isPassword={true}
+                            showPasswordContainerStyles={{ backgroundColor: "#388E3C", borderRadius: 5 }}
+                            containerStyles={{
+                                borderWidth: 2,
+                                paddingHorizontal: 10,
+                                backgroundColor: '#fff',
+                                borderColor: 'blue',
+                                borderRadius: 8,
+                                height: 50,
+                                marginBottom: 10
+
+                            }}
+                            inputStyles={{
+                                color: 'blue',
+                                paddingHorizontal: 10,
+                            }}
+                        />
+                        <FloatingLabelInput
+                            label="Şifre Tekrarı"
+
+                            hintTextColor={'#aaa'}
+
+                            value={createUser.password2}
+                            onChangeText={(val) => { setCreateUser((d) => { return { ...d, password2: val } }); }}
+                            isPassword={true}
+                            showPasswordContainerStyles={{ backgroundColor: "#388E3C", borderRadius: 5 }}
+                            containerStyles={{
+                                borderWidth: 2,
+                                paddingHorizontal: 10,
+                                backgroundColor: '#fff',
+                                borderColor: 'blue',
+                                borderRadius: 8,
+                                height: 50,
+                                marginBottom: 10
+
+                            }}
+                            inputStyles={{
+                                color: 'blue',
+                                paddingHorizontal: 10,
+                            }}
+                        />
                     </View>
                     <View>
                         {existUser && <Text style={{ textAlign: "center", marginTop: 10, color: "red", fontWeight: "bold" }}>Kullanıcı zaten mevcut.</Text>}
@@ -298,10 +351,16 @@ function SignIn(props) {
                     <TouchableOpacity
 
                         onPress={() => {
-                            if (!createUser.firstName) {
-                                Alert.alert("Eksik Bilgi", "Kullanıcı adı alanı boş bırakılamaz")
+                            console.log(validateEmail(createUser.email))
+                            if (validateEmail(createUser.email) == false) {
+                                Alert.alert("Hata", "Email bilgisi hatalı")
                                 return false
                             }
+                            if (createUser.password != createUser.password2) {
+                                Alert.alert("Hata", "Şifreler Eşleşmedi. İki şifrede aynı olmalı")
+                                return false
+                            }
+
                             if (!createUser.email) {
                                 Alert.alert("Eksik Bilgi", "Email alanı boş bırakılamaz")
                                 return false

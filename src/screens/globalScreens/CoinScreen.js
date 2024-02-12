@@ -24,23 +24,23 @@ function CoinScreen(props) {
     const [packages, setPackages] = useState([]);
     const [showTest, setShowTest] = useState(false);
     const [showTestCount, setShowTestCount] = useState(0);
-      
+
     useEffect(() => {
 
         const setup = async () => {
             if (Platform.OS == "android") {
 
                 await Purchases.configure({ apiKey: APIKeys.google });
-            } 
+            }
 
-            else {  
-              await Purchases.configure({ apiKey: APIKeys.apple });
-            } 
+            else {
+                await Purchases.configure({ apiKey: APIKeys.apple });
+            }
 
             const offerings = await Purchases.getOfferings()
             // console.log("ddddd", "offerings")
 
-            // console.log("ddddd", offerings.current.availablePackages)
+            console.log("ddddd", offerings.current.availablePackages)
             setPackages(offerings.current.availablePackages);
 
             Purchases.setDebugLogsEnabled(true)
@@ -49,19 +49,19 @@ function CoinScreen(props) {
 
 
         setup()
-            .catch(console.log); 
+            .catch(console.log);
     }, []);
 
     const setPurchasesPackage = async (p) => {
-       
-        await Purchases.purchasePackage(p)
-     
 
-        var endpoint = await apiConstant.BaseUrl + `/api/usermanager/addcoin/`+p.identifier
+        await Purchases.purchasePackage(p)
+
+
+        var endpoint = await apiConstant.BaseUrl + `/api/usermanager/addcoin/` + p.identifier
         var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
-        alert("Satınalma Başarılı Toplam"+ rps.data.totalCoin+" Adet Anahtarın Var")
-        var prpData=props.UserData
-        prpData.data.coin=rps.data.totalCoin;
+        alert("Satınalma Başarılı Toplam" + rps.data.totalCoin + " Adet Anahtarın Var")
+        var prpData = props.UserData
+        prpData.data.coin = rps.data.totalCoin;
         props.changeUser({ UserData: prpData })
         props.setCoin(rps.data.totalCoin)
         start()
@@ -111,7 +111,7 @@ function CoinScreen(props) {
                     backgroundColor: "#d6eff6"
                 }}>
                     <Text style={{ fontSize: 20, textAlign: "center" }}>
-                        Toplam <Text style={{fontWeight:"bold",color:"red"}}>{userData.coin}</Text> anahtarın bulunuyor
+                        Toplam <Text style={{ fontWeight: "bold", color: "red" }}>{userData.coin}</Text> anahtarın bulunuyor
                     </Text>
                     <Text style={{ fontSize: 15, textAlign: "center" }}>
                         Anahtarları dikkatli kullan. İhtiyacın olmayan duayı açma.
@@ -129,52 +129,83 @@ function CoinScreen(props) {
                         İsrafın platformu yoktur İsraf israftır.
                     </Text>
                 </View>
-                <View style={{ flex: 4 ,marginBottom:10}}>
+                <View style={{ flex: 4, marginBottom: 10 }}>
                     {
                         packages.map((item, key) => {
                             if (item.identifier == "tt1" && showTest == false) {
                                 return <View></View>
                             } else if (item.identifier == "tt1" && showTest == true) {
-                                return <TouchableOpacity onPress={() => setPurchasesPackage(item)}  style={{ marginBottom: 50 }}>
+                                return <TouchableOpacity onPress={() => setPurchasesPackage(item)} style={{ marginBottom: 50 }}>
                                     <Text>G {item.product.price}</Text>
                                 </TouchableOpacity>
                             }
                             let colr = ""
-                            let borderc=""
+                            let borderc = ""
                             switch (key) {
                                 case 0:
                                     colr = "#BBDEFB"
-                                    borderc="blue"
+                                    borderc = "blue"
                                     break;
                                 case 1:
                                     colr = "#F0F4C3";
-                                    borderc="#F9A825"
+                                    borderc = "#F9A825"
                                     break;
-                                    case 2:
-                                        colr = "#E1BEE7"
-                                        borderc="red"
-                                        break;
+                                case 2:
+                                    colr = "#E1BEE7"
+                                    borderc = "red"
+                                    break;
                                 default:
                                     break;
                             }
 
-                            return <View key={key} style={{ flex: 1, padding: 10   }}>
-                                <View style={{ backgroundColor: colr, flex: 1,justifyContent: "center",borderRadius: 10 ,
-                            borderWidth:1,borderStyle:"solid",borderColor:borderc
-                            }}>
+                            return <View key={key} style={{ flex: 1, padding: 10 }}>
+                                <View style={{
+                                    backgroundColor: colr, flex: 1, justifyContent: "center", borderRadius: 10,
+                                    borderWidth: 1, borderStyle: "solid", borderColor: borderc
+                                }}>
                                     <View style={{ alignItems: "center", flexDirection: "row", justifyContent: "center" }}>
-                                        <MaterialCommunityIcons
 
-                                            name={"key"}
-                                            size={35}
-                                            color={"#cc0000"}
-                                        />
-                                        <Text style={{ fontSize: 20, fontWeight: "bold", color: "#cc0000" }}> {item.identifier} ADET  </Text>
-                                        <Text style={{ fontSize: 18, fontWeight: "bold" }}> Dua Açma Anahtarı</Text>
+
+
+                                        {item.identifier == 200 && <>
+                                            <MaterialCommunityIcons
+
+                                                name={"key"}
+                                                size={35}
+                                                color={"#512DA8"}
+                                            />
+                                            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#512DA8" }}> {item.identifier} </Text>
+                                            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#512DA8" }}> Small Anahtar</Text>
+                                        </>
+                                        }
+                                        {item.identifier == 400 && <>
+                                            <MaterialCommunityIcons
+
+                                                name={"key"}
+                                                size={35}
+                                                color={"#FF6D00"}
+                                            />
+                                            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#FF6D00" }}> {item.identifier} </Text>
+                                            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#FF6D00" }}>Medium Anahtar</Text>
+                                        </>
+                                        }
+                                        {item.identifier == 800 && <>
+                                            <MaterialCommunityIcons
+
+name={"key"}
+size={35}
+color={"#D50000"}
+/>
+                                            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#D50000" }}> {item.identifier} </Text>
+                                            <Text style={{ fontSize: 20, fontWeight: "bold", color: "#D50000" }}>Premium Anahtar</Text>
+                                        </>
+                                        }
+
 
                                     </View>
+
                                     <View style={{ alignItems: "center" }}>
-                                        <Text style={{ fontSize: 20, fontWeight: "bold", color: "#043c3f" }}>
+                                        <Text style={{ fontSize: 17, fontWeight: "bold", color: "#043c3f" }}>
                                             {item.product.price.toFixed(2)} ₺
                                         </Text>
                                     </View>
@@ -193,7 +224,7 @@ function CoinScreen(props) {
                                     </View>
 
                                 </View>
-                            </View> 
+                            </View>
                         })
                     }
 
