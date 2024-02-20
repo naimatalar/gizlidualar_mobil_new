@@ -1,3 +1,4 @@
+import { resetAllPlistBundleIdentifiers } from '@expo/config-plugins/build/ios/BundleIdentifier';
 import React, { useEffect } from 'react';
 import { ScrollView, View, Text, Platform } from 'react-native';
 
@@ -14,7 +15,7 @@ export const AboutGizliDualar = (props) => {
 
   async function purchaseProduct() {
     // var InAppPurchases= require("expo-in-app-purchases")
-    console.log(InAppPurchases)
+
   }
 
 
@@ -22,7 +23,11 @@ export const AboutGizliDualar = (props) => {
 
 
 
-
+// if (DeviceLanguage=="tr") {
+  
+// } else if (DeviceLanguage=="ar"){
+  
+// }
   return (
     <View style={{ margin: 10, flex: 1 }}>
       <View style={{ flex: 1 }}>

@@ -10,7 +10,8 @@ import MaterialCommunityIcons
     from 'react-native-vector-icons/MaterialCommunityIcons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Purchases from 'react-native-purchases';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { getLocales, Localization } from 'expo-localization';
 
 
 function CoinScreen(props) {
@@ -55,25 +56,36 @@ function CoinScreen(props) {
     const setPurchasesPackage = async (p) => {
 
         await Purchases.purchasePackage(p)
-
-
+        
         var endpoint = await apiConstant.BaseUrl + `/api/usermanager/addcoin/` + p.identifier
         var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
         alert("Satınalma Başarılı Toplam" + rps.data.totalCoin + " Adet Anahtarın Var")
+        
+        if (rps.data?.t?.token) {
+
+            await AsyncStorage.setItem("hlcapptokengDua", rps.data.t.token)
+            props.navigation.goBack()
+            props.start()
+        }
+       
         var prpData = props.UserData
+       
         prpData.data.coin = rps.data.totalCoin;
         props.changeUser({ UserData: prpData })
         props.setCoin(rps.data.totalCoin)
         start()
     }
-
+ 
     useEffect(() => {
         start()
 
 
-    }, [props.UserData?.data])
+    }, [props.UserData?.data])  
 
     const start = async () => {
+        // var lang= await localStorage.getItem("lang-duaap")
+        console.log(props)
+      
         var endpoint = await apiConstant.BaseUrl + `/api/usermanager/GetCurrentMobilUser`
         var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
         if (rps.data) {
@@ -83,6 +95,9 @@ function CoinScreen(props) {
             }
 
         }
+        
+        
+
         var endpoint2 = await apiConstant.BaseUrl + `/api/CoinAction/GetAllCoinPriceMobil`
         var d = await GetAxios(endpoint2).then(x => { return x.data }).catch(x => { return x });
 
@@ -192,10 +207,10 @@ function CoinScreen(props) {
                                         {item.identifier == 800 && <>
                                             <MaterialCommunityIcons
 
-name={"key"}
-size={35}
-color={"#D50000"}
-/>
+                                                name={"key"}
+                                                size={35}
+                                                color={"#D50000"}
+                                            />
                                             <Text style={{ fontSize: 20, fontWeight: "bold", color: "#D50000" }}> {item.identifier} </Text>
                                             <Text style={{ fontSize: 20, fontWeight: "bold", color: "#D50000" }}>Premium Anahtar</Text>
                                         </>
@@ -206,7 +221,7 @@ color={"#D50000"}
 
                                     <View style={{ alignItems: "center" }}>
                                         <Text style={{ fontSize: 17, fontWeight: "bold", color: "#043c3f" }}>
-                                            {item.product.price.toFixed(2)} ₺
+                                            {item.product.priceString}
                                         </Text>
                                     </View>
 

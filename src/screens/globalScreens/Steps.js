@@ -71,7 +71,7 @@ const Steps = (props) => {
 
         if (token == null) {
 
-            props.navigation.navigate("SignIn")
+            props.navigation.navigate("Coin")
             setLoading(false)
             return false;
         }
@@ -119,6 +119,9 @@ const Steps = (props) => {
     }
     const start = async () => {
 
+  
+
+
         var endpoint = await apiConstant.BaseUrl + "/api/dualar/GetSteps"
         var rps = await PostAxios(endpoint, { duaId: props.route.params.item.id }).then(x => { return x.data }).catch(x => { return x });
         setResizeGif(true)
@@ -146,8 +149,8 @@ const Steps = (props) => {
             }
 
         }
-
-        setIsLockDua(rps.data.lock)
+        console.log(props)
+        setIsLockDua(rps.data.lock) 
         setStepContents(rps.data.steps)
         setSelectedStep(rps.data.steps.find(x => { return x.sira == 1 }))
         setLabels(vrLabel)

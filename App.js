@@ -6,6 +6,8 @@ import { GetAxios } from './src/helpers/dataApi/crud'
 import Index from './src/screens'
 import { Dimensions, View } from 'react-native'
 import Loading from './src/components/Loading'
+import { getLocales } from 'expo-localization';
+
 // "expo-dev-client": "^2.4.11",
 
 //  LogBox.ignoreAllLogs()
@@ -16,6 +18,9 @@ export default function App() {
 
   useEffect(() => {
     try {
+    
+
+      
       start()
 
     } catch (error) {
@@ -26,8 +31,12 @@ export default function App() {
   }, [])
 
 
-  const start = async () => {
+  const start = async () => { 
     setRefresh(true)
+    var lcl=getLocales();
+    
+    await AsyncStorage.setItem("lang-duaap",lcl[0].languageCode=="tr"?"tr":"ar")
+
     //  var sads=await AsyncStorage.removeItem("hlcapptokengDua").then(x => { return x }); //////Silinecek
 
     var tkn = await AsyncStorage.getItem("hlcapptokengDua").then(x => { return x })

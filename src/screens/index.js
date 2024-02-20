@@ -19,7 +19,7 @@ import CoinScreen from './globalScreens/CoinScreen';
 import CoinCounter from './globalScreens/CoinCounter';
 import apiConstant from '../helpers/dataApi/apiConstant';
 import { GetAxios } from '../helpers/dataApi/crud';
-
+// import { getLocales } from 'expo-localization';
 
 LogBox.ignoreLogs(['Warning']); // Ignore log notification by message
 LogBox.ignoreAllLogs();//Ignore all log notifications
@@ -33,13 +33,13 @@ let infoButton = ({ navigation }) => <TouchableOpacity onPress={() => { navigati
   <Text style={{ color: "#297be9", textAlign: "center", fontSize: 8 }}>BİLGİLENDİRME</Text>
 </TouchableOpacity>
 const HomeStack = createStackNavigator();
-function HomeStackScreen({setCoin}) {
+function HomeStackScreen({setCoin,start}) {
   return (
     <HomeStack.Navigator screenOptions={{ headerBackTitle: "Geri" }}>
       <HomeStack.Screen name="Home" options={(e) => ({ title: "Gizli Dualar", headerRight: () => infoButton(e) })} component={Home} />
       <HomeStack.Screen options={(e) => ({ title: e.route.params.name, headerRight: () => infoButton(e) })} name="CategoryDetail" component={Detail} />
       <HomeStack.Screen name="Steps" options={(e) => ({ title: "Dua Adımları", headerRight: () => infoButton(e) })} component={(c)=><Steps {...c} setCoin={setCoin}></Steps>} />
-
+      <SginInStack.Screen name="Coin" options={{ title: "Koin" }} component={(c)=><CoinScreen {...c} start={start}></CoinScreen>} />
       <HomeStack.Screen name="Info" options={{ title: "Gizli Dualar Nedir" }} component={AboutGizliDualar} />
     </HomeStack.Navigator>
   );
@@ -69,11 +69,11 @@ function SginInStackStackScreen({ isLogin, start }) {
 }
 const UserStack = createStackNavigator();
 
-function USerStackStackScreen({ isLogin }) {
+function USerStackStackScreen({ isLogin,start }) {
 
   return (
     <UserStack.Navigator screenOptions={{ headerBackTitle: "Geri" }}>
-      <UserStack.Screen name="Profile" options={(e) => ({ title: "Profil", headerRight: () => infoButton(e) })} component={User} />
+      <UserStack.Screen name="Profile" options={(e) => ({ title: "Profil", headerRight: () => infoButton(e) })} component={(c)=><User {...c} start={start}></User>} />
     </UserStack.Navigator>
   );
 }
@@ -120,11 +120,21 @@ export default function Index({ startBase }) {
   }
   const initialState = {};
   const userReduccer = (state, action) => {
-
+  
+  //   var lcl=getLocales();
+    
+  //  var ln=lcl[0].languageCode
+    
+   if (!state) {
+    state={data:{lang:"ln"}}
+   }
+    
     switch (action.type) {
       case "UserData":
+        action.payload.UserData.lang=ln
         return {
           data: action.payload.UserData,
+        
         };
       default:
         return state;
@@ -196,12 +206,12 @@ export default function Index({ startBase }) {
           })
 
           }>
-          <Tab.Screen options={{ tabBarLabel:"", headerShown: false, title: "Gizli Dualar" }} name="HomeStack" component={(c)=><HomeStackScreen {...c} setCoin={setCoin}></HomeStackScreen>} />
+          <Tab.Screen options={{ tabBarLabel:"", headerShown: false, title: "Gizli Dualar" }} name="HomeStack" component={(c)=><HomeStackScreen {...c} start={start} setCoin={setCoin}></HomeStackScreen>} />
           {!isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Üye Ol / Giriş Yap" }} name="SignIn" component={() => <SginInStackStackScreen isLogin={isLogin} start={startBase}></SginInStackStackScreen>} />
           }
-          {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Profil", headerShown: false }} name="Profile" component={() => <USerStackStackScreen isLogin={isLogin}></USerStackStackScreen>} />
+          {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Profil", headerShown: false }} name="Profile" component={() => <USerStackStackScreen start={startBase} isLogin={isLogin}></USerStackStackScreen>} />
           }
-          {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Koin", headerShown: false, tabBarBadge: coin, tabBarBadgeStyle: { marginTop: -15,marginLeft:11,height:30,paddingTop:6,fontSize:12,borderRadius:15} }} name="Coin" component={() => <CoinStackStackScreen setCoin={setCoin} isLogin={isLogin}></CoinStackStackScreen>} />
+          {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Koin", headerShown: false, tabBarBadge: coin, tabBarBadgeStyle: { marginTop: -15,marginLeft:11,height:30,paddingTop:6,fontSize:12,borderRadius:15} }} name="Coin" component={() => <CoinStackStackScreen setCoin={setCoin} start={start} isLogin={isLogin}></CoinStackStackScreen>} />
           }
 
 

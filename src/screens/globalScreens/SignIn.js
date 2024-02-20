@@ -5,9 +5,8 @@ import apiConstant from '../../helpers/dataApi/apiConstant';
 import { GetAxiosAnonym, PostAxiosAnonym } from '../../helpers/dataApi/crud';
 import { Modal, Portal, Text as PapperText, Button as PapperButton, Provider } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Contacts from 'expo-contacts';
 import { Linking } from 'react-native'
-import Constants from 'expo-constants'
+
 import * as IntentLauncher from 'expo-intent-launcher'
 import MaterialCommunityIcons
     from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -60,6 +59,8 @@ function SignIn(props) {
         if (!rps.isError) {
             // showModal() //düzeltilecek
             getToken(createUser.password, createUser.phoneNumber)
+        }else{
+            Alert.alert("Hata","Eksik Yada Hatalı Bilgi Girişi")
         }
     }
     const getToken = async (pass, nm) => {

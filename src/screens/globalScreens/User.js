@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native';
 import apiConstant from '../../helpers/dataApi/apiConstant';
 import { GetAxios } from '../../helpers/dataApi/crud';
 import { LinearGradient } from 'expo-linear-gradient';
 import { connect } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const User = (props) => {
     const [userData, setUSerData] = useState(props.UserData?.data || {})
     const [refresh, setRefresh] = useState(new Date())
@@ -20,15 +21,46 @@ const User = (props) => {
     const start = async () => {
         var endpoint = await apiConstant.BaseUrl + `/api/usermanager/GetCurrentMobilUser`
         var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
-        if (rps.data) { 
-             
+        console.log(props)
+        if (rps.data) {
+
             setUSerData(rps.data)
             if (!props.UserData?.data) {
                 props.changeUser({ UserData: rps.data })
-              
+
             }
 
         }
+    }
+    const deleteMe = async () => {
+        Alert.prompt("Uyarı", "Anahtarlarınız dahil bütün bilgileriniz silinecek. Onaylıyor Musunuz", [{
+            text: "Tamam",
+            onPress: async () => {
+            
+                var endpoint = await apiConstant.BaseUrl + `/api/usermanager/harddeletecurrent`
+                var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
+                var sads = await AsyncStorage.removeItem("hlcapptokengDua").then(x => { return x });
+                props.start()
+            },
+            style: "default"
+        },
+        {
+            text: "Vazgeç",
+            style: "cancel"
+
+        }
+
+        ], "default")
+
+
+        // if (confirm("Anahtarlarınız dahil bütün bilgileriniz silinecek. Onaylıyor Musunus?")) {
+        //     var endpoint = await apiConstant.BaseUrl + `/api/usermanager/harddeletecurrent`
+        //     var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
+        //     var sads = await AsyncStorage.removeItem("hlcapptokengDua").then(x => { return x });
+        //     props.start()
+        // }
+
+
     }
 
     return (
@@ -49,18 +81,23 @@ const User = (props) => {
                 <View style={{ flexDirection: "row", justifyContent: "center", flex: 1 }}>
                     <Text style={{ fontWeight: "bold", fontSize: 17 }}>Telefon: </Text>
                     <Text style={{ fontSize: 17 }}>{userData.phoneNumber} </Text>
-                </View> 
+                </View>
+                <View style={{ flexDirection: "row", justifyContent: "center", flex: 1, marginTop: 10 }}>
+                    <TouchableOpacity style={{ backgroundColor: "red", padding: 5 }} onPress={() => deleteMe()}>
+                        <Text style={{ color: "white", fontWeight: "bold" }}>Hesabı Sil</Text>
+                    </TouchableOpacity>
+                </View>
                 <View style={{ marginTop: 20, borderColor: "orange", borderWidth: 1, borderStyle: "solid", width: "98%", alignSelf: "center", backgroundColor: "#FFF4EE" }}>
                     <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 15 }}>
                         <Text style={{ fontWeight: "bold", fontSize: 20, color: "white", backgroundColor: "orange", padding: 5 }}>Anahtar Sayısı: {userData.coin} </Text>
 
                     </View>
                     <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 15, marginBottom: 15 }}>
-                        <Text style={{ fontWeight: "bold", color: "#4c669f",fontStyle:"italic" }}>Anahtarlar duaların kilidini açar</Text>
+                        <Text style={{ fontWeight: "bold", color: "#4c669f", fontStyle: "italic" }}>Anahtarlar duaların kilidini açar</Text>
 
                     </View>
                 </View>
-                <View style={{ flexDirection: "row", justifyContent: "center",backgroundColor:"#4c669f", marginTop: 15,padding:5 }}>
+                <View style={{ flexDirection: "row", justifyContent: "center", backgroundColor: "#4c669f", marginTop: 15, padding: 5 }}>
 
                     <Text style={{ fontSize: 20, color: "white", fontWeight: "bold" }}>Kilidini Kaldırdığınız Dualar</Text>
 
@@ -102,8 +139,8 @@ const User = (props) => {
                             </TouchableOpacity>
                         })}
                         {userData.dualarLaboteUsers?.length == 0 &&
-                            <View style={{justifyContent:"center",marginTop:15,backgroundColor:"#fafafa69",paddingBottom:15,paddingTop:15}}>
-                                <Text style={{textAlign:"center",fontSize:17,color:"red",fontWeight:"bold"}}>Henüz kilidini açtığınız bir dua bulunmuyor</Text>
+                            <View style={{ justifyContent: "center", marginTop: 15, backgroundColor: "#fafafa69", paddingBottom: 15, paddingTop: 15 }}>
+                                <Text style={{ textAlign: "center", fontSize: 17, color: "red", fontWeight: "bold" }}>Henüz kilidini açtığınız bir dua bulunmuyor</Text>
                             </View>}
                     </ScrollView>
 

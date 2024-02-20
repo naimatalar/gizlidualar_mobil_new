@@ -1,6 +1,6 @@
 import { GetAxiosAnonym } from "./crud";
 
-// const baseUrl = 'http://192.168.0.14:5001';
+// const baseUrl = 'http://192.168.1.2:45455';
 const baseUrl = 'https://sda.detambilgislem.biz.tr';
  
 const apiConstant = {
@@ -13,3 +13,4 @@ const apiConstant = {
 } 
 export default apiConstant
 
+ 

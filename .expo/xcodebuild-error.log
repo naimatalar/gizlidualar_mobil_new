@@ -1,3 +1,2 @@
---- xcodebuild: WARNING: Using the first of multiple matching destinations:
-{ platform:iOS Simulator, id:EBF5501D-3284-4629-9A1E-EFA3AA634988, OS:15.0, name:iPad Pro (12.9-inch) (5th generation) }
-{ platform:iOS Simulator, id:EBF5501D-3284-4629-9A1E-EFA3AA634988, OS:15.0, name:iPad Pro (12.9-inch) (5th generation) }
+2024-02-21 02:08:09.395 xcodebuild[2449:16101] Writing error result bundle to /var/folders/py/nqc6qqkj04z75vpj6d20g9740000gn/T/ResultBundle_2024-21-02_02-08-0009.xcresult
+xcodebuild: error: '/Users/kycas/Desktop/app/gdlr/kl1/ios/GizliDualar.xcworkspace' does not exist.

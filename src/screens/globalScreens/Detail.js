@@ -9,6 +9,7 @@ import { GetAxios, PostAxiosAnonym } from '../../helpers/dataApi/crud';
 import MaterialCommunityIcons
     from 'react-native-vector-icons/MaterialCommunityIcons';
 import Loading from '../../components/Loading';
+import PowerProgress from '../../components/PowerProgress';
 function Detail(props) {
 
     const [dua, setDua] = useState([])
@@ -19,6 +20,7 @@ function Detail(props) {
     const [unlockedDua, setUnlockedDua] = useState([])
 
     // console.log(props.route.params.item)
+
 
     props.navigation.setOptions({ title: props.route.params.item.name })
     useEffect(() => { getCategory(page); }, [props])
@@ -71,7 +73,7 @@ function Detail(props) {
                 }}
             >
                 {dua.map((item, key) => {
-    //  console.log(item.imageUrl)
+                    //  console.log(item.imageUrl)
                     let isUnlocked = unlockedDua?.find(x => { return x == item.id })
 
                     return <TouchableOpacity key={key} style={{
@@ -79,65 +81,102 @@ function Detail(props) {
                         width: "97%",
                         height: 130,
                         alignItems: "center",
-                        backgroundColor: "#EDE7F6",
+                        backgroundColor: "#F3E5F5",
                         borderWidth: 1,
                         borderColor: "#9C27B0",
-                        borderStyle: "dashed",
+                        borderStyle: "solid",
                         paddingBottom: 10,
                         paddingTop: 10,
                         borderRadius: 10,
                         alignSelf: "center",
-                        marginTop: 15
+                        marginTop: 25,
+                        shadowColor: "#000",
+                        shadowOffset: {
+                            width: 0,
+                            height: 5,
+                        },
+                        shadowOpacity: 0.49,
+                        shadowRadius: 6.27,
+
+                        elevation: 12,
                     }} onPress={() => { props.navigation.navigate("Steps", { item }) }}>
                         <View style={{ flex: 3 }}>
                             <Image style={{ resizeMode: "contain", width: "100%", height: "100%" }} source={{ uri: apiConstant.IMAGEBASEURL + "/" + item.imageUrl }}></Image>
-                            {item.coin > 0 && !isUnlocked && <View style={{
-                                position: "absolute", zIndex: 999,
-                                backgroundColor: "red",
-                                top: -15,
-                                padding: 4,
-                                borderRadius: 10
-                            }}>
-                                <Text style={{ fontSize: 15 }}>
-                                    {"  "}<MaterialCommunityIcons
 
-                                        name={"key"}
-                                        size={20}
-                                        color={"white"}
-                                    />
-                                    <Text style={{ color: "white" }}> {item.coin}  </Text>
-                                </Text>
 
-                            </View>}
-                            {isUnlocked && <View style={{
-                                position: "absolute", zIndex: 999,
-                                backgroundColor: "#126f2c",
-                                top: -15,
-                                padding: 4,
-                                borderRadius: 10
-                            }}>
-                                <Text style={{ fontSize: 15 }}>
-                                    {"  "}<MaterialCommunityIcons
 
-                                        name={"lock-open"}
-                                        size={20}
-                                        color={"white"}
-                                    />
-                                    <Text style={{ color: "white" }}> Açıldı   </Text>
-                                </Text>
-
-                            </View>}
 
                         </View>
+                        {item.coin > 0 && !isUnlocked && <View style={{
+                            position: "absolute", zIndex: 999,
+                            borderColor: "red",
+                            borderStyle: "dotted",
+                            backgroundColor: "red",
+                            borderWidth: 1,
+                            top: 2,
+                            padding: 2,
+                            borderRadius: 8,
+                            right: 2
+                        }}>
+                            <Text style={{ fontSize: 13 }}>
+                                {"  "}<MaterialCommunityIcons
+
+                                    name={"key"}
+                                    size={14}
+                                    color={"white"}
+                                />
+                                <Text style={{ color: "white" }}> {item.coin}  </Text>
+                            </Text>
+
+                        </View>}
+                        {isUnlocked && <View style={{
+                            position: "absolute", zIndex: 999,
+                            backgroundColor: "#126f2c",
+                            top: 2,
+                            padding: 2,
+                            borderRadius: 8,
+                            right: 2
+                        }}>
+                            <Text style={{ fontSize: 13 }}>
+                                {"  "}<MaterialCommunityIcons
+
+                                    name={"lock-open"}
+                                    size={14}
+                                    color={"white"}
+                                />
+                                <Text style={{ color: "white" }}> Açıldı   </Text>
+                            </Text>
+
+                        </View>}
                         <View style={{ flex: 6 }}>
 
                             <View style={{ justifyContent: "center", flexDirection: "row" }}>
-                                <Text style={{ fontWeight: "bold", fontSize: 18, textAlign: "center" }}>{item.title}</Text>
+
+                                <Text style={{ fontWeight: "bold", fontSize: 16, textAlign: "center" }}>{item.title}</Text>
                             </View>
-                            <View><Text>{item.description}... <Text style={{ fontWeight: "bold", color: "#338199" }}>Devamı---{">"}</Text></Text></View>
+                            <View><Text style={{ fontSize: 13 }}>{item.description}... <Text style={{ fontWeight: "bold", color: "#338199" }}>Devamı---{">"}</Text></Text></View>
 
                         </View>
 
+                        <View style={{
+                            justifyContent: "center",
+                            position: "absolute", zIndex: 999,
+                            backgroundColor: "white",
+                            bottom: 2,
+                            padding: 7,
+                            borderColor: "green",
+                            borderWidth: 1,
+                            borderStyle: "dotted",
+                            right: 2,
+                            borderRadius: 8,
+                            height: 27,
+                            width: 108,
+                            paddingRight: 5,
+                            marginLeft: 10,
+
+                        }}>
+                            <PowerProgress power={item.power}></PowerProgress>
+                        </View>
                     </TouchableOpacity>
                 })}
                 <View>

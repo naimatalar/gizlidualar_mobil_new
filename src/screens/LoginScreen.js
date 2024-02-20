@@ -18,7 +18,6 @@ import AcademicHomeScreen from './Academic/AcadmicHomeScreen'
 import PersonalNav from './Personal/PersonalNav'
 import StudentNav from './Student/StudentNav'
 import { Dialog } from "react-native-paper";
-import * as Contacts from 'expo-contacts';
 
 function LoginScreen() {
   const [email, setEmail] = useState({ value: '', error: '' })
