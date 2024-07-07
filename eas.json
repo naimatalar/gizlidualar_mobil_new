@@ -1,0 +1,35 @@
+{
+  "build": {
+    "development": {
+      "distribution": "internal",
+      "developmentClient": true,
+      "env": {
+        "ANDROID_SDK_ROOT": "/Users/kycas/Library/Android/sdk"
+      }
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {}
+
+ 
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "istemi1016@gmail.com",
+        "ascAppId": "6476186749",
+        "appleTeamId": "T43N9873Z2"
+      }
+    }
+  }
+}
