@@ -1,6 +1,0 @@
-Command line invocation:
-    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace /Users/kycas/Desktop/app/gdlr/kl1/ios/GizliDualar.xcworkspace -configuration Debug -scheme GizliDualar -destination id=CBE5E9B6-A012-4742-85CB-EEB80E4CFD8B
-
-User defaults from command line:
-    IDEPackageSupportUseBuiltinSCM = YES
-
