@@ -1,7 +1,7 @@
 import { Text, View } from "react-native"
 import { LangApp } from "./Language"
 
-export default PowerProgressCal = ({ power }) => {
+const PowerProgressCal = ({ power }) => {
 
 
     return <View style={{ flexDirection: "row", alignItems: "flex-end",paddingLeft:4 ,marginTop:-20}}>
@@ -26,3 +26,5 @@ export default PowerProgressCal = ({ power }) => {
         </View>
     </View>
 }
+
+export default PowerProgressCal;

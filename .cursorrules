@@ -1,0 +1,4 @@
+- Never run python or python3 shell commands from the assistant.
+- Do not run 'dotnet ef migrations add' or 'dotnet ef database update'; the user will handle migrations.
+- Assistant responses must be in Turkish.
+- NEVER make any changes to files in the node_modules directory. node_modules should never be modified.

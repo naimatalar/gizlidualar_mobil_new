@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gizli Dualar",
     "slug": "gizli-dualar",
-    "version": "3.0.2",
+    "version": "3.4.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -19,15 +19,37 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gizldualarapplication.gizlidualar",
-      "buildNumber": "32"
+      "buildNumber": "40",
+      "infoPlist": {
+        "ExpoLocalization_supportsRTL": true,
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
-    "android": {
-      "versionCode": 32,
+      "android": {
+      "versionCode": 40,
+      "targetSdkVersion": 35,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.gizldualarapplication.gizlidualar"
+      "package": "com.gizldualarapplication.gizlidualar",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.WAKE_LOCK",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "foregroundService": {
+        "notificationTitle": "Sure oynatılıyor",
+        "notificationBody": "Ses arka planda çalmaya devam ediyor."
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,8 +61,28 @@
       "supportsRTL": true
     },
     "plugins": [
-      "expo-localization"
- 
+      [
+        "expo-localization"
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
+            "minSdkVersion": 24,
+            "ndkVersion": "27.0.12077973"
+          }
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8795169628743262~9598217408",
+          "iosAppId": "ca-app-pub-8795169628743262~5658972391"
+        }
+      ]
     ]
   }
 }

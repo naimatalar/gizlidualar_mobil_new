@@ -1,14 +1,17 @@
-import { EventEmitter, requireNativeModule } from 'expo-modules-core';
+import { requireNativeModule } from 'expo-modules-core';
 const ExpoLocalizationModule = requireNativeModule('ExpoLocalization');
-const emitter = new EventEmitter(ExpoLocalizationModule);
-export function addLocaleListener(listener) {
-    return emitter.addListener('onLocaleSettingsChanged', listener);
+export function addLocaleListener(
+// NOTE(@kitten): We never use the event's data
+listener) {
+    return ExpoLocalizationModule.addListener('onLocaleSettingsChanged', listener);
 }
-export function addCalendarListener(listener) {
-    return emitter.addListener('onCalendarSettingsChanged', listener);
+export function addCalendarListener(
+// NOTE(@kitten): We never use the event's data
+listener) {
+    return ExpoLocalizationModule.addListener('onCalendarSettingsChanged', listener);
 }
 export function removeSubscription(subscription) {
-    return emitter.removeSubscription(subscription);
+    subscription.remove();
 }
 export default ExpoLocalizationModule;
 //# sourceMappingURL=ExpoLocalization.native.js.map

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Text, TouchableOpacity, View, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -11,31 +11,151 @@ import Steps from './globalScreens/Steps';
 import SginIn from './globalScreens/SignIn';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AboutGizliDualar } from './globalScreens/AboutGizliDualar';
+import RemoveAdsSubscription from './globalScreens/RemoveAdsSubscription';
 import User from './globalScreens/User';
 import { LogBox } from 'react-native';
 import { Provider, useSelector } from 'react-redux';
 import { createStore } from 'redux';
 import CoinScreen from './globalScreens/CoinScreen';
+import Purchases from 'react-native-purchases';
+import { useState, useEffect } from 'react';
 
 import apiConstant from '../helpers/dataApi/apiConstant';
 import { GetAxios } from '../helpers/dataApi/crud';
 import { DeviceLanguage, LangApp } from '../components/Language';
 import FilterListSc from './globalScreens/FilterList';
-import Kisilik from './globalScreens/Kisilik';
+import Sureler from './globalScreens/Sureler';
+import RuhHaliAyetleri from './globalScreens/RuhHaliAyetleri';
+import PushNotificationScreen from './globalScreens/PushNotification';
+import BanaOzel from './BanaOzel';
+import OzelAlanim from './OzelAlanim';
+import { navigationRef, flushPendingNavigation } from '../navigation/navigationRef';
 
 // import { getLocales } from 'expo-localization';
 
 LogBox.ignoreLogs(['Warning']); // Ignore log notification by message
 LogBox.ignoreAllLogs();//Ignore all log notifications
-let infoButton = ({ navigation }) => <TouchableOpacity onPress={() => { navigation.navigate("Info") }} style={{ alignItems: "center", borderRadius: 17, marginRight: 10, padding: 6 }}>
+let vSay = 0;
+let showMesage = false;
 
-  <MaterialCommunityIcons
-    name={"alert"}
-    size={24}
-    color={"#297be9"}
-  />
-  <Text style={{ color: "#297be9", textAlign: "center", fontSize: 11 }}>{LangApp("blBig")}</Text>
-</TouchableOpacity>
+const APIKeys = {
+  apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
+  google: 'goog_OfndwmvoPjhIPGFfcHLzfGuYPIR',
+}
+
+export const infoButton = ({ navigation }) => {
+  const [hasSubscription, setHasSubscription] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const checkSubscription = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        await Purchases.configure({ apiKey: APIKeys.google })
+      } else {
+        await Purchases.configure({ apiKey: APIKeys.apple })
+      }
+
+      const customerInfo = await Purchases.getCustomerInfo()
+      const isActive = customerInfo.entitlements.active['naim1016'] !== undefined
+      
+      setHasSubscription(isActive)
+      setLoading(false)
+    } catch (error) {
+      console.warn('Subscription check error', error)
+      setHasSubscription(false)
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    checkSubscription()
+
+    // Navigation focus olduğunda tekrar kontrol et (satın alma sonrası için)
+    const unsubscribeFocus = navigation?.addListener('focus', () => {
+      checkSubscription()
+    })
+
+    return () => {
+      if (unsubscribeFocus) {
+        unsubscribeFocus()
+      }
+    }
+  }, [navigation])
+
+  if (loading) {
+    return null
+  }
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+      }}
+    >
+      {hasSubscription ? (
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('RemoveAds')
+          }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: 10,
+            paddingVertical: 4,
+            paddingHorizontal: 10,
+          }}
+        >
+          <MaterialCommunityIcons
+            name="check-circle"
+            size={16}
+            color="#2E7D32"
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            style={{
+              color: '#2E7D32',
+              textAlign: 'center',
+              fontSize: 11,
+              fontWeight: 'bold',
+            }}
+          >
+            Reklamsız
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('RemoveAds')
+          }}
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 5,
+            marginRight: 10,
+            paddingVertical: Platform.OS === 'ios' ? 3 : 6,
+            paddingHorizontal: Platform.OS === 'ios' ? 8 : 14,
+            borderWidth: Platform.OS === 'ios' ? 1 : 1.5,
+            borderColor: '#6A1B9A',
+          }}
+        >
+          <Text
+            style={{
+              color: '#6A1B9A',
+              textAlign: 'center',
+              fontSize: Platform.OS === 'ios' ? 10 : 13,
+              fontWeight: 'bold', 
+            }}
+          >
+            Reklamsız/Premium
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  )
+}
 const HomeStack = createStackNavigator();
 function HomeStackScreen({ setCoin, start }) {
 
@@ -45,8 +165,10 @@ function HomeStackScreen({ setCoin, start }) {
       <HomeStack.Screen options={(e) => ({ title: e.route.params.name, headerRight: () => infoButton(e) })} name="CategoryDetail" component={Detail} />
 
       <HomeStack.Screen name="Steps" options={(e) => ({ title: "Dua Adımları", headerRight: () => infoButton(e) })} component={(c) => <Steps {...c} setCoin={setCoin}></Steps>} />
-      <SginInStack.Screen name="Coin" options={{ title: LangApp("anahtar")  }} component={(c) => <CoinScreen {...c} start={start}></CoinScreen>} />
+      <SginInStack.Screen name="Coin" options={{ title: LangApp("anahtar") }} component={(c) => <CoinScreen {...c} start={start}></CoinScreen>} />
+      <HomeStack.Screen name="RemoveAds" options={{ title: "Reklamı Kaldır" }} component={(c) => <RemoveAdsSubscription {...c} start={alert}></RemoveAdsSubscription>} />
       <HomeStack.Screen name="Info" options={{ title: "Gizli Dualar Nedir" }} component={AboutGizliDualar} />
+      <HomeStack.Screen name="RuhHaliAyetleri" options={(e) => ({ title: "Ruh Hali Ayetleri", headerRight: () => infoButton(e) })} component={RuhHaliAyetleri} />
 
     </HomeStack.Navigator>
   );
@@ -57,7 +179,7 @@ function FilterListStackScreeen({ setCoin }) {
 
   return (
     <FilterListStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
-      <FilterListStack.Screen name="FilterList" options={(e) => ({ headerRight: () => infoButton(e), title: LangApp("duaListesi") })} component={FilterListSc} />
+      <FilterListStack.Screen name="FilterList" options={(e) => ({ headerRight: () => infoButton(e), title: "Ruh Hali Ayetleri" })} component={RuhHaliAyetleri} />
       <HomeStack.Screen name="Steps" options={(e) => ({ title: "Dua Adımları", headerRight: () => infoButton(e) })} component={(c) => <Steps {...c} setCoin={setCoin}></Steps>} />
 
     </FilterListStack.Navigator>
@@ -65,15 +187,22 @@ function FilterListStackScreeen({ setCoin }) {
 }
 
 
-const KisilikStack = createStackNavigator();
-function KisilikStackScreeen({ setCoin }) {
-
+const SurelerStack = createStackNavigator();
+function SurelerStackScreen({ start }) {
   return (
-    <KisilikStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
-      <KisilikStack.Screen name="Kisilik" options={(e) => ({ headerRight: () => infoButton(e), title: LangApp("kisilik") })} component={(c) => <Kisilik {...c} setCoin={setCoin}></Kisilik>} />
-
-    </KisilikStack.Navigator>
-  );
+    <SurelerStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
+      <SurelerStack.Screen
+        name="Sureler"
+        options={(e) => ({ headerRight: () => infoButton(e), title: LangApp("sureler") })}
+        component={Sureler}
+      />
+      <SurelerStack.Screen 
+        name="RemoveAds" 
+        options={{ title: "Reklamı Kaldır" }} 
+        component={(c) => <RemoveAdsSubscription {...c} start={start || (() => {})}></RemoveAdsSubscription>} 
+      />
+    </SurelerStack.Navigator>
+  )
 }
 
 
@@ -93,6 +222,7 @@ function SginInStackStackScreen({ isLogin, start }) {
       {isLogin && <SginInStack.Screen name="Coin" options={{ title: "Koin" }} component={CoinScreen} />
       }
 
+      <HomeStack.Screen name="RemoveAds" options={{ title: "Reklamı Kaldır" }} component={(c) => <RemoveAdsSubscription {...c} start={start}></RemoveAdsSubscription>} />
       <HomeStack.Screen name="Info" options={{ title: LangApp("gd"), headerRight: infoButton }} component={AboutGizliDualar} />
 
     </SginInStack.Navigator>
@@ -106,18 +236,33 @@ function USerStackStackScreen({ setCoin, start }) {
     <UserStack.Navigator screenOptions={{ headerBackTitle: "Geri" }}>
       <UserStack.Screen name="Profile" options={(e) => ({ title: "Profil", headerRight: () => infoButton(e) })} component={(c) => <User {...c} start={start}></User>} />
       <HomeStack.Screen name="Steps" options={(e) => ({ title: "Dua Adımları", headerRight: () => infoButton(e) })} component={(c) => <Steps {...c} setCoin={setCoin}></Steps>} />
-
+      <UserStack.Screen 
+        name="RemoveAds" 
+        options={{ title: "Reklamı Kaldır" }} 
+        component={(c) => <RemoveAdsSubscription {...c} start={start || (() => {})}></RemoveAdsSubscription>} 
+      />
     </UserStack.Navigator>
   );
 }
 const CoinStack = createStackNavigator();
 
-function CoinStackStackScreen({ isLogin, setCoin,start }) {
+function CoinStackStackScreen({ isLogin, setCoin, start }) {
 
   return (
     <UserStack.Navigator screenOptions={{ headerBackTitle: "Geri" }}>
       <UserStack.Screen name="Profile" options={(e) => ({ title: "Anahtar", headerRight: () => infoButton(e) })} component={(c) => <CoinScreen start={start} {...c} setCoin={setCoin}></CoinScreen>} />
     </UserStack.Navigator>
+  );
+}
+
+const BanaOzelStack = createStackNavigator();
+
+function BanOzelScreen({ isLogin, setCoin, start }) {
+
+  return (
+    <BanaOzelStack.Navigator screenOptions={{ headerBackTitle: "Geri" }}>
+      <BanaOzelStack.Screen name="BanaOzel" options={(e) => ({ title: "Anahtar", headerRight: () => infoButton(e) })} component={(c) => <BanaOzel start={start} {...c} setCoin={setCoin}></BanaOzel>} />
+    </BanaOzelStack.Navigator>
   );
 }
 
@@ -127,6 +272,7 @@ const Tab = createBottomTabNavigator();
 export default function Index({ startBase }) {
   const [isLogin, setIsLogin] = React.useState(false)
   const [refresh, setRefresh] = React.useState()
+
   const [coin, setCoin] = React.useState(0)
 
 
@@ -143,7 +289,7 @@ export default function Index({ startBase }) {
 
 
   const start = async () => {
-  
+
     // await AsyncStorage.removeItem("hlcapptokengDua") 
     var tkn = await AsyncStorage.getItem("hlcapptokengDua")
     if (tkn) {
@@ -187,7 +333,8 @@ export default function Index({ startBase }) {
   const store = createStore(userReduccer);
   return (
     <Provider store={store}>
-      <NavigationContainer  >
+
+      <NavigationContainer ref={navigationRef} onReady={flushPendingNavigation} >
         <Tab.Navigator
 
           initialRouteName="HomeStack"
@@ -213,12 +360,16 @@ export default function Index({ startBase }) {
                   : 'key-outline';
               } else if (route.name === 'FilterList') {
                 iconName = focused
-                  ? 'view-list'
-                  : 'view-list-outline';
-              } else if (route.name === 'Kisilik') {
+                  ? 'book-open-variant'
+                  : 'book-open-variant-outline';
+              } else if (route.name === 'Sureler') {
+                iconName = 'headphones';
+              } else if (route.name === 'BanaOzel') {
                 iconName = focused
                   ? 'pentagram'
                   : 'pentagram';
+              } else if (route.name === 'OzelAlanim') {
+                iconName = focused ? 'hands-pray' : 'hands-pray';
               }
 
               let sty = {}
@@ -243,7 +394,7 @@ export default function Index({ startBase }) {
                   sty.borderColor = "blue"
                   sty.width = 60
                   sty.height = 60
-                  incSize=42
+                  incSize = 42
                 }
               }
 
@@ -266,7 +417,7 @@ export default function Index({ startBase }) {
                   sty.borderColor = "#FF3D00"
                   sty.width = 60
                   sty.height = 60
-                  incSize=42
+                  incSize = 42
                 }
               }
               if (route.name === 'FilterList') {
@@ -277,10 +428,10 @@ export default function Index({ startBase }) {
                   sty.borderColor = "#FF3D00"
                   sty.width = 60
                   sty.height = 60
-                  incSize=42
+                  incSize = 42
                 }
               }
-              if (route.name === 'Kisilik') {
+              if (route.name === 'Sureler') {
                 sty = { backgroundColor: "#AEEA00", width: 48, height: 48, marginTop: 5, borderRadius: 50, justifyContent: "center", alignItems: "center" }
                 if (focused) {
                   sty.marginTop = 1
@@ -288,7 +439,29 @@ export default function Index({ startBase }) {
                   sty.borderColor = "#FF3D00"
                   sty.width = 60
                   sty.height = 60
-                  incSize=42
+                  incSize = 42
+                }
+              }
+              if (route.name === 'BanaOzel') {
+                sty = { backgroundColor: "#AEEA00", width: 48, height: 48, marginTop: 5, borderRadius: 50, justifyContent: "center", alignItems: "center" }
+                if (focused) {
+                  sty.marginTop = 1
+                  sty.borderWidth = 1
+                  sty.borderColor = "#FF3D00"
+                  sty.width = 60
+                  sty.height = 60
+                  incSize = 42
+                }
+              }
+              if (route.name === 'OzelAlanim') {
+                sty = { backgroundColor: "#BBDEFB", width: 48, height: 48, marginTop: 5, borderRadius: 50, justifyContent: "center", alignItems: "center" }
+                if (focused) {
+                  sty.marginTop = 1
+                  sty.borderWidth = 1
+                  sty.borderColor = "#1976D2"
+                  sty.width = 60
+                  sty.height = 60
+                  incSize = 42
                 }
               }
 
@@ -320,13 +493,21 @@ export default function Index({ startBase }) {
           })
 
           }>
-          <Tab.Screen options={{ tabBarLabel: "", title: "Kişilik", headerShown: false }} name="Kisilik" component={(c) => <KisilikStackScreeen setCoin={setCoin} {...c}></KisilikStackScreeen>} />
+          <Tab.Screen options={{ tabBarLabel: "", title: LangApp("sureler"), headerShown: false }} name="Sureler" component={(c) => <SurelerStackScreen {...c} start={start}></SurelerStackScreen>} />
+          <Tab.Screen
+            options={{ tabBarLabel: "", title: LangApp("ozelAlanim"), headerShown: false }}
+            name="OzelAlanim"
+            component={OzelAlanim}
+          />
 
-          <Tab.Screen options={{ tabBarLabel: "", title: "Dualar", headerShown: false }} name="FilterList" component={(c) => <FilterListStackScreeen setCoin={setCoin} {...c}></FilterListStackScreeen>} />
+          <Tab.Screen options={{ tabBarLabel: "", title: "Ruh Hali Ayetleri", headerShown: false }} name="FilterList" component={(c) => <FilterListStackScreeen setCoin={setCoin} {...c}></FilterListStackScreeen>} />
+          {/* <Tab.Screen options={{ tabBarLabel: "", title: "Dualar", headerShown: false }} name="BanaOzel" component={(c) => <BanOzelScreen setCoin={setCoin} {...c}></BanOzelScreen>} /> */}
 
           <Tab.Screen options={{ tabBarLabel: "", headerShown: false, title: LangApp("gd") }} name="HomeStack" component={(c) => <HomeStackScreen {...c} start={start} setCoin={setCoin}></HomeStackScreen>} />
           {!isLogin && <Tab.Screen options={{ tabBarLabel: "", title: LangApp("uyeGiris") }} name="SignIn" component={() => <SginInStackStackScreen isLogin={isLogin} start={startBase}></SginInStackStackScreen>} />
           }
+
+
           {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Profil", headerShown: false }} name="Profile" component={() => <USerStackStackScreen start={startBase} setCoin={setCoin}></USerStackStackScreen>} />
           }
           {/* {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: LangApp("anahtar") , headerShown: false, tabBarBadge: coin, tabBarBadgeStyle: coinBadgeStyle }} name="Coin" component={() => <CoinStackStackScreen setCoin={setCoin} start={start} isLogin={isLogin}></CoinStackStackScreen>} />
@@ -337,6 +518,7 @@ export default function Index({ startBase }) {
 
         </Tab.Navigator >
       </NavigationContainer>
+
     </Provider>
   );
 }
