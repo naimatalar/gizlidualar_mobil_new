@@ -19,6 +19,8 @@ import * as Notifications from 'expo-notifications'
 import { LangApp } from '../components/Language'
 import apiConstant from '../helpers/dataApi/apiConstant'
 import { DEFAULT_PROFILE, GOAL_OPTIONS, calculatePerformance } from '../helpers/ozelAlanim/prescriptionEngine'
+import { useNavigation } from '@react-navigation/native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   fetchDailyPlan,
   fetchHistory,
@@ -788,6 +790,7 @@ const ProfileModal = ({
 }
 
 const OzelAlanim = () => {
+  const navigation = useNavigation()
   const [activeTab, setActiveTab] = useState('today')
   const [profile, setProfile] = useState(DEFAULT_PROFILE)
   const [draftProfile, setDraftProfile] = useState(DEFAULT_PROFILE)
@@ -796,6 +799,7 @@ const OzelAlanim = () => {
   const [performance, setPerformance] = useState(calculatePerformance([]))
   const [loading, setLoading] = useState(true)
   const [modalVisible, setModalVisible] = useState(false)
+  const [loginModalVisible, setLoginModalVisible] = useState(false)
   const [notificationIds, setNotificationIds] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [selectedDua, setSelectedDua] = useState(null)
@@ -913,7 +917,14 @@ const OzelAlanim = () => {
     setPlanDescription('')
   }, [])
 
-  const handleModalOpen = useCallback(() => {
+  const handleModalOpen = useCallback(async () => {
+    // Login kontrolü
+    const token = await AsyncStorage.getItem('hlcapptokengDua')
+    if (!token) {
+      setLoginModalVisible(true)
+      return
+    }
+
     // Mevcut plan kontrolü
     const hasExistingPlan = todayHistory.length > 0
     if (hasExistingPlan) {
@@ -1190,22 +1201,7 @@ debugger
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>{LangApp('ozelAlanim')}</Text>
-          <Text style={styles.headerSubtitle}>{LangApp('gorevTasarimi')}</Text>
-        </View>
-        <TouchableOpacity  delayPressOut={()=>{return true}  }   style={styles.profileButton} onPress={handleModalOpen}>
-          <MaterialCommunityIcons name="account-cog" size={22} color="#4A148C" />
-          <Text style={styles.profileButtonLabel}>{LangApp('profiliniOlustur')}</Text>
-        </TouchableOpacity>
-      </View>
-      <AdmobViewBanner
-                  iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
-                  androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
-                  bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
-                  style={{ alignItems: 'center', paddingVertical: 4 }}
-                />
+  
 
       <View style={styles.aiInfoBanner}>
         <MaterialCommunityIcons name="robot" size={16} color="#4A148C" />
@@ -1213,6 +1209,11 @@ debugger
           Niyetinizin veya arzunuzun hasıl olması için yapay zeka ile size özel günlük dua uygulanışları planı çıkarıyoruz.
         </Text>
       </View>
+      
+      <TouchableOpacity  delayPressOut={()=>{return true}  }   style={styles.profileButton} onPress={handleModalOpen}>
+        <MaterialCommunityIcons name="account-cog" size={22} color="#FFFFFF" />
+        <Text style={styles.profileButtonLabel}>{LangApp('profiliniOlustur')}</Text>
+      </TouchableOpacity>
    
       <View style={styles.tabRow}>
         <TabButton
@@ -1260,6 +1261,47 @@ debugger
         modalLoading={modalLoading}
         canSave={canSavePlan}
       />
+      
+      {/* Login Modal */}
+      <Modal
+        visible={loginModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLoginModalVisible(false)}
+      >
+        <View style={styles.loginModalBackdrop}>
+          <View style={styles.loginModalContent}>
+            <Text style={styles.loginModalTitle}>
+            Bu Özelliği Kullanmak için 
+            </Text>
+            <Text style={styles.loginModalTitle}>Kayıt Ol/Giriş Yap</Text>
+            <View style={styles.loginModalButtons}>
+              <TouchableOpacity
+                style={styles.loginModalButton}
+                onPress={() => {
+                  setLoginModalVisible(false)
+                  navigation.navigate('SignIn')
+                }}
+              >
+                <Text style={styles.loginModalButtonText}>Giriş Yap</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.loginModalButton, styles.loginModalCloseButton]}
+                onPress={() => setLoginModalVisible(false)}
+              >
+                <Text style={[styles.loginModalButtonText, styles.loginModalCloseButtonText]}>Kapat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      
+          <AdmobViewBanner
+                  iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
+                  androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
+                  bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
+                  style={{ alignItems: 'center', paddingVertical: 4 }}
+                />
       <Modal visible={!!imagePreview} transparent animationType="fade">
         <View style={styles.imagePreviewBackdrop}>
           <TouchableOpacity style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>
@@ -1314,16 +1356,21 @@ const styles = StyleSheet.create({
   profileButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    backgroundColor: '#7B6D8B',
     borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#4A148C',
     paddingHorizontal: 14,
     paddingVertical: 8,
+    marginTop: 0,
+    marginBottom: 20,
     elevation: Platform.OS === 'android' ? 3 : 0,
   },
   profileButtonLabel: {
     marginLeft: 8,
     fontSize: 13,
-    color: '#4A148C',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   deleteButton: {
@@ -2248,6 +2295,57 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '80%',
     resizeMode: 'contain',
+  },
+  loginModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loginModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 320,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  loginModalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A237E',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  loginModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  loginModalButton: {
+    flex: 1,
+    backgroundColor: '#4A148C',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginModalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loginModalCloseButton: {
+    backgroundColor: '#E0E0E0',
+  },
+  loginModalCloseButtonText: {
+    color: '#424242',
   },
   deleteModalBackdrop: {
     flex: 1,

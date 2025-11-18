@@ -358,7 +358,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                 </Text>
 
                 <TouchableOpacity
-                    style={[styles.resetButton, resetting && styles.resetButtonDisabled]}
+                    style={[styles.resetButton, resetting && styles.resetButtonDisabled,{display: 'none'}]}
                     onPress={handleResetSubscription}
                     disabled={resetting}
                 >

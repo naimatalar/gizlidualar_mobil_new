@@ -10,6 +10,7 @@ import { GetAxios } from '../../helpers/dataApi/crud';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceLanguage, LangApp } from '../../components/Language';
+import AdmobViewBanner from '../../components/ads/AdmobViewBanner';
 function Home(props) {
 
   const [cateory, setCategory] = useState()
@@ -72,7 +73,12 @@ function Home(props) {
       <ScrollView style={{ width: "100%", flexDirection: "column" }}>
         {cateory}
       </ScrollView>
-
+      <AdmobViewBanner
+                  iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
+                  androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
+                  bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
+                  style={{ alignItems: 'center', paddingVertical: 4 }}
+                />
     </Background>
 
   );

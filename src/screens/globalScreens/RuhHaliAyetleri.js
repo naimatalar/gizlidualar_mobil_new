@@ -23,6 +23,7 @@ import apiConstant from '../../helpers/dataApi/apiConstant'
 import { LangApp } from '../../components/Language'
 import { matchAyet } from '../../helpers/dataApi/prescriptionService'
 import { setupTrackPlayer, addTrack, playTrack, pauseTrack, stopTrack, seekTo, reset, getState } from '../../services/trackPlayerService'
+import AdmobViewBanner from '../../components/ads/AdmobViewBanner'
 
 const PAGE_SIZE = 500
 const analysisTagSamples = ['huzur', 'uyku','para','bereket', 'mutluluk', 'şifa', 'bolluk', 'umut','bereket', 'denge', 'sabır']
@@ -202,7 +203,12 @@ const RuhHaliAyetleri = () => {
   }, [matchedAyet])
 
   // Track bittiğinde state'i güncelle
-  useTrackPlayerEvents([Event.PlaybackTrackChanged, Event.PlaybackState], async (event) => {
+  useTrackPlayerEvents(
+    [Event.PlaybackTrackChanged, Event.PlaybackState].filter(Boolean),
+    async (event) => {
+      if (!event || !event.type) {
+        return
+      }
     if (event.type === Event.PlaybackTrackChanged && event.nextTrack == null) {
       // Track bitti
       resetPlayerState()
@@ -486,6 +492,7 @@ const RuhHaliAyetleri = () => {
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
+     
             {!hasSubscription && (
               <TouchableOpacity
               
@@ -644,10 +651,16 @@ const RuhHaliAyetleri = () => {
                 {playerError && <Text style={styles.errorInline}>{playerError}</Text>}
               </View>
             )}
+                  
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
-
+      <AdmobViewBanner
+                  iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
+                  androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
+                  bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
+                  style={{ alignItems: 'center', paddingVertical: 4 }}
+                />
       <AnalysisModal visible={analysisVisible} desireText={moodText} />
     </>
   )

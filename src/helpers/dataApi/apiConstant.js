@@ -5,6 +5,7 @@ const baseUrl = 'https://sda.detambilgislem.biz.tr';
  
 const apiConstant = {
     IMAGEBASEURL: baseUrl + '/root/upload',
+    AUDIOBASEURL: baseUrl + '/root/SureMp3', // Ses dosyaları için base URL
     SEARCH: baseUrl + '/api/Search/search', 
     GET_PRODUCT_BY_COMPANYID: baseUrl + '/api/Product/getProductByCompanyId',
     BaseUrl: baseUrl 

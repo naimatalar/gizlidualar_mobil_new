@@ -205,6 +205,19 @@ function SurelerStackScreen({ start }) {
   )
 }
 
+const OzelAlanimStack = createStackNavigator();
+function OzelAlanimStackScreen() {
+  return (
+    <OzelAlanimStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
+      <OzelAlanimStack.Screen
+        name="OzelAlanim"
+        options={(e) => ({ headerRight: () => infoButton(e), title: LangApp("ozelAlanim") })}
+        component={OzelAlanim}
+      />
+    </OzelAlanimStack.Navigator>
+  )
+}
+
 
 
 
@@ -497,7 +510,7 @@ export default function Index({ startBase }) {
           <Tab.Screen
             options={{ tabBarLabel: "", title: LangApp("ozelAlanim"), headerShown: false }}
             name="OzelAlanim"
-            component={OzelAlanim}
+            component={(c) => <OzelAlanimStackScreen {...c}></OzelAlanimStackScreen>}
           />
 
           <Tab.Screen options={{ tabBarLabel: "", title: "Ruh Hali Ayetleri", headerShown: false }} name="FilterList" component={(c) => <FilterListStackScreeen setCoin={setCoin} {...c}></FilterListStackScreeen>} />

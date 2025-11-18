@@ -4,12 +4,16 @@ let isInitialized = false
 
 export async function setupTrackPlayer() {
   if (isInitialized) {
+    console.log('TrackPlayer zaten initialize edilmiş')
     return
   }
 
   try {
+    console.log('TrackPlayer.setupPlayer() çağrılıyor...')
     await TrackPlayer.setupPlayer()
+    console.log('TrackPlayer.setupPlayer() başarılı')
     
+    console.log('TrackPlayer.updateOptions() çağrılıyor...')
     await TrackPlayer.updateOptions({
       capabilities: [
         Capability.Play,
@@ -32,28 +36,39 @@ export async function setupTrackPlayer() {
       ],
       progressUpdateEventInterval: 500,
     })
+    console.log('TrackPlayer.updateOptions() başarılı')
 
     isInitialized = true
+    console.log('TrackPlayer başarıyla initialize edildi')
   } catch (error) {
-    console.warn('TrackPlayer setup error:', error)
+    console.error('TrackPlayer setup error:', error)
+    console.error('TrackPlayer setup error stack:', error?.stack)
     throw error
   }
 }
 
 export async function addTrack(track) {
   try {
+    console.log('TrackPlayer.add() çağrılıyor, track:', track)
     await TrackPlayer.add(track)
+    console.log('TrackPlayer.add() başarılı')
   } catch (error) {
-    console.warn('TrackPlayer add error:', error)
+    console.error('TrackPlayer add error:', error)
+    console.error('TrackPlayer add error stack:', error?.stack)
     throw error
   }
 }
 
 export async function playTrack() {
   try {
+    const currentState = await TrackPlayer.getState()
+    console.log('playTrack() çağrılıyor, mevcut state:', currentState)
     await TrackPlayer.play()
+    const newState = await TrackPlayer.getState()
+    console.log('playTrack() başarılı, yeni state:', newState)
   } catch (error) {
-    console.warn('TrackPlayer play error:', error)
+    console.error('TrackPlayer play error:', error)
+    console.error('TrackPlayer play error stack:', error?.stack)
     throw error
   }
 }

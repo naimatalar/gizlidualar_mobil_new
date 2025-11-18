@@ -165,13 +165,10 @@ function SignIn(props) {
                 <View style={{backgroundColor:"#AD1457",padding:10,borderRadius:10,marginBottom:5}}>
                 <Text style={{color:"white",marginBottom:3,fontWeight:"bold",margin:5}}>{LangApp("telGerekli")}</Text>
                     <FloatingLabelInput
-                        label={LangApp("telefonNo")}
-                        keyboardType='numeric'
+                        label="Kullanıcı Adı"
+                        keyboardType='default'
                         hintTextColor={'#aaa'}
-                        maskType='phone'
                         value={phoneNumber}
-                        mask="999 999 99 99"
-                        hint="534 000 00 00"
                         onChangeText={(val) => { ; setPhoneNumber(val) }}
                         containerStyles={{
                             borderWidth: 2,
@@ -273,14 +270,11 @@ function SignIn(props) {
                         <View style={{backgroundColor:"#AD1457",padding:5,borderRadius:10,marginBottom:10}}>
                          <Text style={{color:"white",marginBottom:3,fontWeight:"bold",margin:5}}>{LangApp("telGerekli")}</Text>
                         <FloatingLabelInput
-                            label={LangApp("telefonNo")}
-                            keyboardType='numeric'
+                            label="Kullanıcı Adı"
+                            keyboardType='default'
                             hintTextColor={'#aaa'}
-                            maskType='phone'
                             value={createUser.phoneNumber}
                             onChangeText={(val) => { setCreateUser((d) => { return { ...d, phoneNumber: val } }); setPhoneNumber(val) }}
-                            mask="999 999 99 99"
-                            hint="534 000 00 00"
                             containerStyles={{
                                 borderWidth: 2,
                                 paddingHorizontal: 10,
