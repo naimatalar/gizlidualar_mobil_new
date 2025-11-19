@@ -24,7 +24,7 @@ const APIKeys = {
 
 // "expo-dev-client": "^2.4.11",
 
-const AD_OVERLAY_COOLDOWN_MS = 3 * 60 * 1000
+const AD_OVERLAY_COOLDOWN_MS = 4 * 60 * 1000
 const AD_OVERLAY_STORAGE_KEY = 'ad_overlay_next_allowed_at'
 
 const wrapPressabilityConfig = (config) => {
