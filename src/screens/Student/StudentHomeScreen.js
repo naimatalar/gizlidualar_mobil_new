@@ -110,20 +110,20 @@ function StudentHomeScreen(props) {
 
 
               <View style={{ flexDirection: "row", marginTop: 40, justifyContent: "space-between", width: "100%" }}>
-                <TouchableOpacity onPress={() => props.navigation.navigate("StudentLessonScores_")} style={{ width: "100%", backgroundColor: "#00675b", padding: 10, borderRadius: 41, flexDirection: "row", justifyContent: "center" }}>
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => props.navigation.navigate("StudentLessonScores_")} style={{ width: "100%", backgroundColor: "#00675b", padding: 10, borderRadius: 41, flexDirection: "row", justifyContent: "center" }}>
                   <Text style={{ fontWeight: "bold", color: "white", fontSize: 18 }}><Icon name="book" size={20} color="white" /> {"  " + LangApp("Lessons")}</Text>
                 </TouchableOpacity>
               </View>
 
 
               <View style={{ flexDirection: "row", marginTop: 15, justifyContent: "space-between", width: "100%" }}>
-                <TouchableOpacity onPress={() => props.navigation.navigate("InformationAcademician_")} style={{ width: "100%", backgroundColor: "#005cb2", padding: 10, borderRadius: 41, flexDirection: "row", justifyContent: "center" }}>
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => props.navigation.navigate("InformationAcademician_")} style={{ width: "100%", backgroundColor: "#005cb2", padding: 10, borderRadius: 41, flexDirection: "row", justifyContent: "center" }}>
                   <Text style={{ fontWeight: "bold", color: "white", fontSize: 18 }}><Icon name="graduation-cap" size={20} color="white" /> {" " + LangApp("Advisor")}</Text>
                 </TouchableOpacity>
               </View>
 
               <View style={{ flexDirection: "row", marginTop: 15, justifyContent: "space-between", width: "100%" }}>
-                <TouchableOpacity onPress={() => setPasswordDialog(true)} style={{ width: "100%", backgroundColor: "#4a0072", padding: 10, borderRadius: 41, flexDirection: "row", justifyContent: "center" }}>
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => setPasswordDialog(true)} style={{ width: "100%", backgroundColor: "#4a0072", padding: 10, borderRadius: 41, flexDirection: "row", justifyContent: "center" }}>
                   <Text style={{ fontWeight: "bold", color: "white", fontSize: 18 }}><Icon name="key" size={20} color="white" /> {" " + LangApp("PasswordChange")}</Text>
                 </TouchableOpacity>
 
@@ -141,8 +141,8 @@ function StudentHomeScreen(props) {
             <Text style={{ fontWeight: "bold", marginTop: 10 }}>{LangApp("DoYouApprove")}</Text>
 
             <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginTop: 30, paddingBottom: 20 }}>
-              <TouchableOpacity onPress={() => { setPasswordLoading(true); resetPass() }} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Onayla</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => setPasswordDialog(false)} style={{ backgroundColor: "red", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Vazgeç</Text></TouchableOpacity>
+              <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => { setPasswordLoading(true); resetPass() }} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Onayla</Text></TouchableOpacity>
+              <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => setPasswordDialog(false)} style={{ backgroundColor: "red", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Vazgeç</Text></TouchableOpacity>
 
             </View>
             <View style={{ alignItems: "center", marginBottom: 10, marginTop: 10 }} >
@@ -165,7 +165,7 @@ function StudentHomeScreen(props) {
             <Text>{alertText}</Text>
 
             <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginTop: 30, paddingBottom: 20 }}>
-              <TouchableOpacity onPress={() => setAlertDialog(false)} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Ok</Text></TouchableOpacity>
+              <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => setAlertDialog(false)} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Ok</Text></TouchableOpacity>
               {/* <TouchableOpacity onPress={() => setPasswordDialog(false)} style={{ backgroundColor: "red", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Vazgeç</Text></TouchableOpacity> */}
 
             </View>

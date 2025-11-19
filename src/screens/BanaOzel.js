@@ -26,6 +26,7 @@ const OptionList = () => {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {items.map((item, index) => (
           <TouchableOpacity
+          delayLongPress={()=>{return true}  }  
             key={index}
             style={styles.option}
             onPress={() => Alert.alert(item, 'Detaylara yönlendiriliyor...')}>
@@ -43,7 +44,7 @@ const BanaOzel = (props) => {
             <View>
 
             </View>
-            <TouchableOpacity style={styles.container} onPress={()=>{}}>
+            <TouchableOpacity  delayLongPress={()=>{return true}  }  style={styles.container} onPress={()=>{}}>
                 <Text style={styles.title}>Bana Özel Vefk Oluşturulmasını İstiyorum</Text>
                 <Text style={styles.subtitle}>
                     Kendinize ya da bir başkasına "Aşk & Muhabbet, Büyü Bozma, Sağlık ya da Bereket" için formül oluşturmamızı istiyorsanız buraya dokunun.

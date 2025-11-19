@@ -15,6 +15,7 @@ export default function Dashboard({ navigation }) {
         editing this project.
       </Paragraph>
       <Button
+       delayLongPress={()=>{return true}  }  
         mode="outlined"
         onPress={() =>
           navigation.reset({

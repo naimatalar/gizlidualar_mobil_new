@@ -72,7 +72,7 @@ function MyStatus(props) {
 
                 totalUnjoin = +rnd;
                 return <View key={key} style={{ flexDirection: "column", backgroundColor: "white", justifyContent: "center", alignItems: "center", width: "97%", borderColor: "blue", borderWidth: 1, borderStyle: "dashed", marginBottom: 20, paddingBottom: 20, paddingTop: 20 }}>
-                    <TouchableOpacity onPress={() => props.navigation.navigate("Absence", { detail: lssnD, lesson: item })} style={{ position: "absolute", bottom: 15, right: 15, backgroundColor: "blue", padding: 10 }}>
+                    <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => props.navigation.navigate("Absence", { detail: lssnD, lesson: item })} style={{ position: "absolute", bottom: 15, right: 15, backgroundColor: "blue", padding: 10 }}>
                         <Text style={{ fontWeight: "bold", color: "white" }}>Detay</Text>
                     </TouchableOpacity>
                     <View>

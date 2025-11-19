@@ -556,7 +556,7 @@ const Sureler = () => {
         </View>
         
         {!hasSubscription ? (
-          <TouchableOpacity
+          <TouchableOpacity delayLongPress={()=>{return true}  }  
             onPress={() => {
               navigation.navigate('RemoveAds')
             }}
@@ -675,7 +675,7 @@ const Sureler = () => {
                 </View>
              
                 <View style={styles.controlsRow}>
-                  <TouchableOpacity
+                  <TouchableOpacity delayLongPress={()=>{return true}  }  
                     onPress={() => handleSeekBy(item, -10)}
                     style={[styles.controlButton, (controlsDisabled || isBuffering) && styles.controlDisabled]}
                     disabled={controlsDisabled || isBuffering}
@@ -694,6 +694,7 @@ const Sureler = () => {
                       isCurrent && isPlaying ? styles.playButtonActive : null,
                     ]}
                     disabled={isPreparing}
+                    delayLongPress={()=>{return true}  }  
                   >
                     {isPreparing && isCurrent ? (
                       <ActivityIndicator color='#FFFFFF' size='small' />
@@ -706,7 +707,7 @@ const Sureler = () => {
                     )}
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                  <TouchableOpacity delayLongPress={()=>{return true}  }  
                     onPress={() => handleStopPress(item)}
                     style={[styles.controlButton, controlsDisabled && styles.controlDisabled]}
                     disabled={controlsDisabled}
@@ -718,7 +719,7 @@ const Sureler = () => {
                     />
                   </TouchableOpacity>
 
-                  <TouchableOpacity
+                  <TouchableOpacity delayLongPress={()=>{return true}  }  
                     onPress={() => handleSeekBy(item, 10)}
                     style={[styles.controlButton, (controlsDisabled || isBuffering) && styles.controlDisabled]}
                     disabled={controlsDisabled || isBuffering}
@@ -751,7 +752,7 @@ const Sureler = () => {
 
                 {!!item.description ? (
                   <>
-                    <TouchableOpacity
+                    <TouchableOpacity delayLongPress={()=>{return true}  }  
                       onPress={() => toggleDescription(item.id)}
                       style={styles.collapseToggle}
                       activeOpacity={0.7}

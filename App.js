@@ -24,7 +24,7 @@ const APIKeys = {
 
 // "expo-dev-client": "^2.4.11",
 
-const AD_OVERLAY_COOLDOWN_MS = 3 * 60 * 10000
+const AD_OVERLAY_COOLDOWN_MS = 3 * 60 * 1000
 const AD_OVERLAY_STORAGE_KEY = 'ad_overlay_next_allowed_at'
 
 const wrapPressabilityConfig = (config) => {
@@ -33,10 +33,19 @@ const wrapPressabilityConfig = (config) => {
   }
   if (config.onPress.__adOverlayWrapped) {
     return config
+  }  
+  console.log("config", config)
+  if (config.delayLongPress) { 
+    console.log("delayLongPress var")
+    return config
+  }   
+  else{
+    console.log("delayLongPress yok")
   }
   const originalOnPress = config.onPress
   const wrappedOnPress = (...args) => {
     try {
+
       globalThis.__TRIGGER_AD_OVERLAY?.()
     } catch (error) {
       console.warn('Ad overlay trigger error', error)

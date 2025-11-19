@@ -373,7 +373,7 @@ const Steps = (props) => {
                             color={"green"}
                         /><Text style={{ fontSize: 18, color: "green" }}> {LangApp("kilkaldok")}</Text>
                     </TouchableOpacity>}
-                    {!token && <TouchableOpacity onPress={() => props.navigation.navigate("SignIn")} style={{ flexDirection: "row", padding: 10, marginTop: 20, backgroundColor: "#a8cea9", borderColor: "#4CAF50", borderWidth: 1, borderStyle: "solid" }}>
+                    {!token && <TouchableOpacity  delayLongPress={()=>{return true}  }   onPress={() => props.navigation.navigate("SignIn")} style={{ flexDirection: "row", padding: 10, marginTop: 20, backgroundColor: "#a8cea9", borderColor: "#4CAF50", borderWidth: 1, borderStyle: "solid" }}>
                         <MaterialCommunityIcons
                             name={"lock-open"}
                             size={20}
@@ -390,7 +390,7 @@ const Steps = (props) => {
 
 
                 {stepLenght > 1 && <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fbe0cf" }}>
-                    <TouchableOpacity onPress={() => stepChange(-1)} style={{ justifyContent: "center", flexDirection: "column", height: 60, borderTopRightRadius: 50, alignItems: "center", backgroundColor: "#fe7013", flex: 3 }} >
+                    <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => stepChange(-1)} style={{ justifyContent: "center", flexDirection: "column", height: 60, borderTopRightRadius: 50, alignItems: "center", backgroundColor: "#fe7013", flex: 3 }} >
                         <Text>
                             <MaterialCommunityIcons
                                 name={"arrow-left-circle"}
@@ -404,7 +404,7 @@ const Steps = (props) => {
                             <Text style={{ fontWeight: "bold", color: "white" }}>{currentPosition}</Text>
                         </View>
                     </View>
-                    <TouchableOpacity onPress={() => stepChange(+1)} style={{ justifyContent: "center", height: 60, flexDirection: "column", borderTopLeftRadius: 50, alignItems: "center", backgroundColor: "#fe7013", flex: 3 }} >
+                    <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => stepChange(+1)} style={{ justifyContent: "center", height: 60, flexDirection: "column", borderTopLeftRadius: 50, alignItems: "center", backgroundColor: "#fe7013", flex: 3 }} >
                         <Text>
                             <MaterialCommunityIcons
                                 name={"arrow-right-circle"}
@@ -427,8 +427,8 @@ const Steps = (props) => {
                             </Text>
 
                             <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginTop: 30, paddingBottom: 5 }}>
-                                <TouchableOpacity onPress={() => { setAlertDialog(false); props.navigation.navigate('Coin') }} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>{LangApp("anahtarAl")}</Text></TouchableOpacity>
-                                <TouchableOpacity onPress={() => setAlertDialog(false)} style={{ backgroundColor: "red", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>{LangApp("vazgec")}</Text></TouchableOpacity>
+                                <TouchableOpacity  delayLongPress={()=>{return true}  }  nPress={() => { setAlertDialog(false); props.navigation.navigate('Coin') }} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>{LangApp("anahtarAl")}</Text></TouchableOpacity>
+                                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => setAlertDialog(false)} style={{ backgroundColor: "red", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>{LangApp("vazgec")}</Text></TouchableOpacity>
                             </View>
                         </View>
 

@@ -161,7 +161,7 @@ function LoginScreen() {
                 <Text>{alertText}</Text>
 
                 <View style={{ flexDirection: "row", justifyContent: "space-evenly", marginTop: 30, paddingBottom: 20 }}>
-                  <TouchableOpacity onPress={() => setAlertDialog(false)} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Tamam</Text></TouchableOpacity>
+                  <TouchableOpacity  delayLongPress={()=>{return true}  }   onPress={() => setAlertDialog(false)} style={{ backgroundColor: "green", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Tamam</Text></TouchableOpacity>
                   {/* <TouchableOpacity onPress={() => setPasswordDialog(false)} style={{ backgroundColor: "red", width: 100, justifyContent: "center" }}><Text style={{ textAlign: "center", color: "white", fontWeight: "bold", fontSize: 16, padding: 8 }}>Vazgeç</Text></TouchableOpacity> */}
 
                 </View>

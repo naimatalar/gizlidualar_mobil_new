@@ -137,9 +137,11 @@ function Detail(props) {
                         },
                         shadowOpacity: 0.49,
                         shadowRadius: 6.27,
-
+ 
                         elevation: 12,
-                    }} onPress={() => { props.navigation.navigate("Steps", { item }) }}>
+                    }} 
+                    delayLongPress={()=>{return true}  }  
+                    onPress={() => { props.navigation.navigate("Steps", { item }) }}>
                         <View style={{ flex: 3 }}>
                             <Image style={{ resizeMode: "contain", width: "100%", height: "100%" }} source={{ uri: apiConstant.IMAGEBASEURL + "/" + item.imageUrl }}></Image>
 

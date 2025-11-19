@@ -122,6 +122,7 @@ const formatPlanTime = (value) => {
 
 const TabButton = ({ label, icon, isActive, onPress }) => (
   <TouchableOpacity
+  delayLongPress={()=>{return true}  }  
     onPress={onPress}
     delayPressOut={()=>{return true}  }  
     style={[styles.tabButton, isActive && styles.tabButtonActive]}
@@ -179,6 +180,7 @@ const PlanAccordionList = ({ days = [], expandedDays = [], onToggleDay, onToggle
     if (isDone) {
       return (
         <TouchableOpacity
+        delayLongPress={()=>{return true}  }  
           style={[styles.statusBadgeCircle, styles.statusBadgeDone]}
           onPress={() => onToggleTask?.({ ...task, planDate })}
           activeOpacity={0.7}
@@ -200,7 +202,7 @@ const PlanAccordionList = ({ days = [], expandedDays = [], onToggleDay, onToggle
 
     if (canComplete) {
       return (
-        <TouchableOpacity style={styles.taskToggle} onPress={() => onToggleTask?.({ ...task, planDate })}>
+        <TouchableOpacity style={styles.taskToggle}  delayLongPress={()=>{return true}  }   onPress={() => onToggleTask?.({ ...task, planDate })}>
           <Text style={styles.taskToggleLabel}>{LangApp('gorevTamamla')}</Text>
         </TouchableOpacity>
       )
@@ -236,7 +238,7 @@ const PlanAccordionList = ({ days = [], expandedDays = [], onToggleDay, onToggle
 
         return (
           <View key={dayKey} style={styles.accordionCard}>
-            <TouchableOpacity style={styles.accordionHeader} onPress={() => onToggleDay(dayKey)}>
+            <TouchableOpacity   delayLongPress={()=>{return true}  }   style={styles.accordionHeader} onPress={() => onToggleDay(dayKey)}>
               <View>
                 <View style={styles.accordionTitleRow}>
                   <Text style={styles.accordionTitle}>
@@ -312,7 +314,7 @@ const PlanAccordionList = ({ days = [], expandedDays = [], onToggleDay, onToggle
                       <View key={task.id} style={taskStyle}>
                         <View style={styles.accordionTaskInfo}>
                           {resolveImageUrl(task.imageUrl) ? (
-                            <TouchableOpacity onPress={() => onToggleTask?.({ ...task, planDate: day.date, previewOnly: true })}>
+                            <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => onToggleTask?.({ ...task, planDate: day.date, previewOnly: true })}>
                               <Image source={{ uri: resolveImageUrl(task.imageUrl) }} style={styles.taskInlineImage} />
                             </TouchableOpacity>
                           ) : null}
@@ -711,7 +713,7 @@ const ProfileModal = ({
           </ScrollView>
 
           <View style={styles.stepNavigation}>
-            <TouchableOpacity
+            <TouchableOpacity  delayLongPress={()=>{return true}  }  
               style={[
                 styles.stepNavButton,
                 styles.stepNavButtonSpacer,
@@ -756,11 +758,11 @@ const ProfileModal = ({
           </View>
 
           <View style={styles.modalActions}>
-            <TouchableOpacity onPress={onClose} style={styles.modalButtonSecondary}>
+            <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={onClose} style={styles.modalButtonSecondary}>
               <Text style={styles.modalButtonSecondaryText}>{LangApp('iptal')}</Text>
             </TouchableOpacity>
             {currentStepIndex === 1 ? (
-            <TouchableOpacity
+            <TouchableOpacity delayLongPress={()=>{return true}  }  
               onPress={onSave}
               style={[styles.modalButtonPrimary, (!canSave || modalLoading) && styles.modalButtonPrimaryDisabled]}
               disabled={!canSave || modalLoading}
@@ -1210,7 +1212,7 @@ debugger
         </Text>
       </View>
       
-      <TouchableOpacity  delayPressOut={()=>{return true}  }   style={styles.profileButton} onPress={handleModalOpen}>
+      <TouchableOpacity  delayLongPress={()=>{return true}  }    style={styles.profileButton} onPress={handleModalOpen}>
         <MaterialCommunityIcons name="account-cog" size={22} color="#FFFFFF" />
         <Text style={styles.profileButtonLabel}>{LangApp('profiliniOlustur')}</Text>
       </TouchableOpacity>
@@ -1238,7 +1240,7 @@ debugger
 
       {todayHistory.length > 0 && !modalVisible && (
         <View style={styles.deleteButtonContainer}>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDeletePlan}>
+          <TouchableOpacity  delayLongPress={()=>{return true}  }   style={styles.deleteButton} onPress={handleDeletePlan}>
             <MaterialCommunityIcons name="delete" size={20} color="#D32F2F" />
             <Text style={styles.deleteButtonLabel}>Bu Planı Kaldır</Text>
           </TouchableOpacity>
@@ -1277,6 +1279,7 @@ debugger
             <Text style={styles.loginModalTitle}>Kayıt Ol/Giriş Yap</Text>
             <View style={styles.loginModalButtons}>
               <TouchableOpacity
+                  delayLongPress={()=>{return true}  }  
                 style={styles.loginModalButton}
                 onPress={() => {
                   setLoginModalVisible(false)
@@ -1285,7 +1288,7 @@ debugger
               >
                 <Text style={styles.loginModalButtonText}>Giriş Yap</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity  delayLongPress={()=>{return true}  }  
                 style={[styles.loginModalButton, styles.loginModalCloseButton]}
                 onPress={() => setLoginModalVisible(false)}
               >
@@ -1304,7 +1307,7 @@ debugger
                 />
       <Modal visible={!!imagePreview} transparent animationType="fade">
         <View style={styles.imagePreviewBackdrop}>
-          <TouchableOpacity style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>
+          <TouchableOpacity  delayLongPress={()=>{return true}  }  style={styles.imagePreviewBackdrop} onPress={() => setImagePreview(null)}>
             {imagePreview ? <Image source={{ uri: imagePreview }} style={styles.imagePreview} /> : null}
           </TouchableOpacity>
         </View>

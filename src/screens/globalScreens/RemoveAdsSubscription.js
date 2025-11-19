@@ -296,7 +296,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
         return (
             <View style={styles.container}>
                 <Text style={styles.errorText}>Paket bulunamadı</Text>
-                <TouchableOpacity
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  
                     style={styles.button}
                     onPress={() => navigation.goBack()}
                 >
@@ -340,7 +340,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                     </Text>
                 </View>
 
-                <TouchableOpacity
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  
                     style={[styles.purchaseButton, purchasing && styles.purchaseButtonDisabled]}
                     onPress={handlePurchase}
                     disabled={purchasing}
@@ -357,7 +357,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                     edebilirsiniz.
                 </Text>
 
-                <TouchableOpacity
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  
                     style={[styles.resetButton, resetting && styles.resetButtonDisabled,{display: 'none'}]}
                     onPress={handleResetSubscription}
                     disabled={resetting}

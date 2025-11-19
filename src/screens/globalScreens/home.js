@@ -26,6 +26,7 @@ function Home(props) {
     setCategory(<View></View>)
     setCategory(rps.data.map((item, key) => {
       return <TouchableOpacity
+      delayLongPress={()=>{return true}  }  
         onPress={() => { props.navigation.navigate("CategoryDetail", { item }) }}
         style={{ flexDirection: "row", backgroundColor: "grey", marginBottom: 20, justifyContent: "center", padding: 7, }}
         key={key} >

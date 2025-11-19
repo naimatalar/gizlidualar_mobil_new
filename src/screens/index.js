@@ -97,6 +97,7 @@ export const infoButton = ({ navigation }) => {
     >
       {hasSubscription ? (
         <TouchableOpacity
+        delayLongPress={()=>{return true}  }  
           onPress={() => {
             navigation.navigate('RemoveAds')
           }}
@@ -127,6 +128,7 @@ export const infoButton = ({ navigation }) => {
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
+        delayLongPress={()=>{return true}  }  
           onPress={() => {
             navigation.navigate('RemoveAds')
           }}

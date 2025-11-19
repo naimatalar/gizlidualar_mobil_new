@@ -86,7 +86,7 @@ const User = (props) => {
                 </View>
                
                 <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 15 }}>
-                    <TouchableOpacity style={{ backgroundColor: "orange", padding: 5, paddingHorizontal: 15, borderRadius: 8 }} onPress={async() => {
+                    <TouchableOpacity  delayLongPress={()=>{return true}  }  style={{ backgroundColor: "orange", padding: 5, paddingHorizontal: 15, borderRadius: 8 }} onPress={async() => {
                         var tkn = await AsyncStorage.removeItem("hlcapptokengDua").then(x => { return x })
                         props.start();
                     }}>
@@ -95,7 +95,7 @@ const User = (props) => {
                 </View>
 
                 <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
-                    <TouchableOpacity style={{ backgroundColor: "red", padding: 5, paddingHorizontal: 15, borderRadius: 8 }} onPress={() => deleteMe()}>
+                    <TouchableOpacity  delayLongPress={()=>{return true}  }  style={{ backgroundColor: "red", padding: 5, paddingHorizontal: 15, borderRadius: 8 }} onPress={() => deleteMe()}>
                         <Text style={{ color: "white", fontWeight: "bold" }}>Hesabı Sil</Text>
                     </TouchableOpacity>
                 </View>
@@ -114,7 +114,7 @@ const User = (props) => {
                 <View style={styles.buttonsContainer}>
                     {/* İki yan yana buton */}
                     <View style={styles.rowButtons}>
-                        <TouchableOpacity
+                        <TouchableOpacity delayLongPress={()=>{return true}  }  
                             style={[styles.button, styles.halfButton]}
                             onPress={() => {
                                 // Tab navigator'a navigate et
@@ -125,7 +125,7 @@ const User = (props) => {
                             <Text style={styles.buttonText}>Sure Dinle</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity
+                        <TouchableOpacity delayLongPress={()=>{return true}  }  
                             style={[styles.button, styles.halfButton]}
                             onPress={() => {
                                 // Tab navigator'a navigate et
@@ -140,7 +140,7 @@ const User = (props) => {
                     {/* Premium Özellikler Kartı */}
                     <View style={styles.premiumCard}>
                         {/* Alt kısımda uzun buton - Kartın içinde */}
-                        <TouchableOpacity
+                        <TouchableOpacity delayLongPress={()=>{return true}  }  
                             style={[styles.premiumButton, styles.fullButton]}
                             onPress={() => {
                                 props.navigation.navigate('RemoveAds')

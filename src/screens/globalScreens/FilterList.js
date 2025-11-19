@@ -170,7 +170,7 @@ function FilterListSc(props) {
 
                     </View>
                     <View style={{ flex: 1 }}>
-                        <TouchableOpacity onPress={() => { getCategory(1, true) }} style={{
+                        <TouchableOpacity  delayLongPress={()=>{return true}  }   onPress={() => { getCategory(1, true) }} style={{
                             borderWidth: 1, borderColor: "#fe7013", borderStyle: "solid", width: 70, height: 50,
                             alignItems: "center",
                             flexDirection: "row", justifyContent: "center", alignSelf: "center", marginTop: 10, padding: 10,
@@ -212,7 +212,7 @@ function FilterListSc(props) {
                             <Text style={{ fontSize: 20, fontWeight: "bold" }}>{LangApp("kayitBulunamadi")}</Text>
                             <Text style={{ fontSize: 16, textAlign: "center", marginTop: 10 }}>{LangApp("cumleBulunamadi")}</Text>
                         </View>
-                        <TouchableOpacity onPress={() => { getCategory(1, true, true) }}
+                        <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => { getCategory(1, true, true) }}
 
                             style={{ borderRadius: 5, padding: 15, backgroundColor: "#A5D6A7", marginTop: 20 }}>
                             <Text>{LangApp("aramaTemizle")}</Text>
@@ -229,7 +229,7 @@ function FilterListSc(props) {
                         //  console.log(item.imageUrl)
                         let isUnlocked = unlockedDua?.find(x => { return x == item.id })
 
-                        return <TouchableOpacity key={key} style={{
+                        return <TouchableOpacity  delayLongPress={()=>{return true}  }   key={key} style={{
                             flexDirection: "row",
                             width: "97%",
                             height: 130,

@@ -495,7 +495,7 @@ const RuhHaliAyetleri = () => {
      
             {!hasSubscription && (
               <TouchableOpacity
-              
+              delayLongPress={()=>{return true}  }  
                 style={styles.backgroundPlayButton}
                 onPress={() => {
                   navigation.navigate('RemoveAds')
@@ -541,6 +541,7 @@ const RuhHaliAyetleri = () => {
               style={[styles.matchButton, loading && styles.matchButtonDisabled]}
               onPress={handleMatchAyet}
               disabled={loading}
+            
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
@@ -573,7 +574,7 @@ const RuhHaliAyetleri = () => {
                 return (
                   <>
                     <View style={styles.controlsRow}>
-                      <TouchableOpacity
+                      <TouchableOpacity  delayLongPress={()=>{return true}  }  
                         onPress={() => handleSeekBy(-10)}
                         style={[styles.controlButton, (isPreparing || isBuffering) && styles.controlDisabled]}
                         disabled={isPreparing || isBuffering}
@@ -585,11 +586,12 @@ const RuhHaliAyetleri = () => {
                         />
                       </TouchableOpacity>
 
-                      <TouchableOpacity
+                      <TouchableOpacity  
                        delayPressOut={()=>{return true}  }  
                         onPress={handlePlayPress}
                         style={[styles.playButton, isPlaying && styles.playButtonActive]}
                         disabled={isPreparing}
+                        delayLongPress={()=>{return true}  }  
                       >
                         {isPreparing ? (
                           <ActivityIndicator color="#FFFFFF" size="small" />
@@ -602,7 +604,7 @@ const RuhHaliAyetleri = () => {
                         )}
                       </TouchableOpacity>
 
-                      <TouchableOpacity
+                      <TouchableOpacity  delayLongPress={()=>{return true}  }  
                         onPress={handleStopPress}
                         style={[styles.controlButton, isPreparing && styles.controlDisabled]}
                         disabled={isPreparing}
@@ -614,7 +616,7 @@ const RuhHaliAyetleri = () => {
                         />
                       </TouchableOpacity>
 
-                      <TouchableOpacity
+                      <TouchableOpacity  delayLongPress={()=>{return true}  }  
                         onPress={() => handleSeekBy(10)}
                         style={[styles.controlButton, (isPreparing || isBuffering) && styles.controlDisabled]}
                         disabled={isPreparing || isBuffering}

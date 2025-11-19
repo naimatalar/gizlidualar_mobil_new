@@ -33,7 +33,7 @@ function DatePicker({value,onChange,activeDate}) {
             {
 
                 Platform.OS != "ios" && <>
-                    <TouchableOpacity style={{ padding: 5, backgroundColor: "#BDBDBD" }} onPress={() => setDatetimePicker(2)}>
+                    <TouchableOpacity  delayLongPress={()=>{return true}  }   style={{ padding: 5, backgroundColor: "#BDBDBD" }} onPress={() => setDatetimePicker(2)}>
                         <Text>{moment(activeDate).format("DD/MM/yyy")} </Text> 
                     </TouchableOpacity>
                     {datetimePicker == 2 && <DateTimePicker

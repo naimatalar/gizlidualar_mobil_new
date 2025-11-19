@@ -343,7 +343,7 @@ useEffect(()=>{
                     </View>
 
                 </View>
-                <TouchableOpacity onPress={() => { carkCal() }} style={{
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => { carkCal() }} style={{
                     width: "98%", backgroundColor: "#B2DFDB", justifyContent: "center", alignItems: "center", height: 40,
                     marginTop: 20,
                     borderWidth: 1,

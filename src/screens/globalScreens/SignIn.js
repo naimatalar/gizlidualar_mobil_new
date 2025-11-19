@@ -135,7 +135,7 @@ function SignIn(props) {
                 paddingBottom: 10
 
             }}>
-                <TouchableOpacity onPress={() => setIsLogin(false)} style={{ alignItems: "center", paddingTop: 10 }}>
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => setIsLogin(false)} style={{ alignItems: "center", paddingTop: 10 }}>
                     <Text style={!isLogin && { color: 'green', fontWeight: 'bold', textDecorationLine: "underline" } || { fontWeight: 'bold' }}>{LangApp("kayitOl")}</Text>
                     {!isLogin && <MaterialCommunityIcons
                         name={"arrow-up"}
@@ -212,7 +212,7 @@ function SignIn(props) {
                     />
 
                 </View>
-                <TouchableOpacity onPress={() => { authCode() }} style={{
+                <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => { authCode() }} style={{
                     borderWidth: 1, borderColor: "#fe7013", borderStyle: "solid", width: "70%", height: 50,
                     alignItems: "center",
                     flexDirection: "row", justifyContent: "center", alignSelf: "center", marginTop: 50, padding: 10,
@@ -346,7 +346,7 @@ function SignIn(props) {
                         {existUser && <Text style={{ textAlign: "center", marginTop: 10, color: "red", fontWeight: "bold" }}>{LangApp("mevcutKullanici")}</Text>}
                     </View>
                     <TouchableOpacity
-
+ delayLongPress={()=>{return true}  }  
                         onPress={() => {
                             console.log(validateEmail(createUser.email))
                             if (validateEmail(createUser.email) == false) {
@@ -434,7 +434,7 @@ function SignIn(props) {
                             />
                         </View>
                         <Text>{tempCode}</Text>
-                        <TouchableOpacity onPress={() => { getToken() }} style={{
+                        <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => { getToken() }} style={{
                             borderWidth: 1, borderColor: "#fe7013", borderStyle: "solid", width: "100%",
                             flexDirection: "row", justifyContent: "center", alignSelf: "center", marginTop: 10, padding: 10,
                             borderRadius: 5, marginBottom: 30
