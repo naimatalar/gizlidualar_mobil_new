@@ -4,6 +4,8 @@ import {
   Alert,
   Animated,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
   ScrollView,
   StyleSheet,
@@ -34,6 +36,8 @@ import {
   deleteAllPlans,
 } from '../helpers/dataApi/prescriptionService'
 import AdmobViewBanner from '../components/ads/AdmobViewBanner'
+
+
 
 async function cancelScheduledNotifications(ids = []) {
   if (!Array.isArray(ids) || !ids.length) {
@@ -528,6 +532,7 @@ const ProfileModal = ({
   const [desireText, setDesireText] = useState('')
   const [matchLoading, setMatchLoading] = useState(false)
   const [analysisVisible, setAnalysisVisible] = useState(false)
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
 
   const steps = [
     { key: 'desire', label: LangApp('arzulariniYaz') },
@@ -539,6 +544,7 @@ const ProfileModal = ({
       setStepIndex(0)
       setDesireText('')
       setMatchLoading(false)
+      setIsKeyboardVisible(false)
       return
     }
 
@@ -548,6 +554,29 @@ const ProfileModal = ({
       setStepIndex(1)
     }
   }, [visible, selectedDua])
+
+  useEffect(() => {
+    if (!visible) return
+
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setIsKeyboardVisible(true)
+      }
+    )
+
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false)
+      }
+    )
+
+    return () => {
+      keyboardWillShow.remove()
+      keyboardWillHide.remove()
+    }
+  }, [visible])
 
   const currentStepIndex = stepIndex
   const canSubmitDesire = desireText.trim().length >= 5 && !matchLoading
@@ -586,7 +615,28 @@ const ProfileModal = ({
   }, [desireText, onSelectCategory, onSelectDua])
 
   const content = (
-      <View style={styles.modalBackdrop}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={[
+          styles.modalBackdrop,
+          {
+            justifyContent: isKeyboardVisible ? 'flex-start' : 'center',
+            paddingTop: isKeyboardVisible ? 0 : 0
+          }
+        ]}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+        />
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{LangApp('profiliniOlustur')}</Text>
@@ -633,7 +683,13 @@ const ProfileModal = ({
             })}
           </View>
 
-          <ScrollView style={{ maxHeight: '70%' }}>
+          <ScrollView 
+            style={{ maxHeight: '60%' }}
+            contentContainerStyle={{ paddingBottom: 10 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
             {currentStepIndex === 0 ? (
               <View>
                 <Text style={styles.modalLabel}>{LangApp('arzulariniYaz')}</Text>
@@ -776,12 +832,9 @@ const ProfileModal = ({
             ) : null}
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
+    </Modal>
   )
-
-  if (!visible) {
-    return null
-  }
 
   return (
     <>
@@ -1637,16 +1690,10 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    zIndex: 999,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
@@ -1655,12 +1702,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 560,
     alignSelf: 'center',
-    maxHeight: '90%',
+    maxHeight: '95%',
+    marginTop: 0,
     shadowColor: '#000000',
     shadowOpacity: 0.2,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
+    justifyContent: 'space-between',
   },
   modalHeader: {
     flexDirection: 'row',

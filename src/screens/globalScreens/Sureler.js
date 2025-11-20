@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import {
   ActivityIndicator,
   AppState,
@@ -69,7 +69,6 @@ const Sureler = () => {
   function buildAudioUrl(fileName) {
     return fileName ? `${audioBaseUrl}${fileName}` : null
   }
-
   // TrackPlayer'ı başlat
   useEffect(() => {
     let isMounted = true

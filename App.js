@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import apiConstant from './src/helpers/dataApi/apiConstant'
 
@@ -11,8 +11,7 @@ import './src/polyfills/backHandlerFix'
 import { navigate } from './src/navigation/navigationRef'
 import { Audio } from 'expo-av'
 import * as Notifications from 'expo-notifications'
-import mobileAds, { MaxAdContentRating } from 'react-native-google-mobile-ads'
-import AdMobBanner from './src/components/ads/AdMobBanner'
+import mobileAds, { MaxAdContentRating, InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads'
 import Purchases from 'react-native-purchases'
 
 const APIKeys = {
@@ -24,7 +23,7 @@ const APIKeys = {
 
 // "expo-dev-client": "^2.4.11",
 
-const AD_OVERLAY_COOLDOWN_MS = 4 * 60 * 1000
+const AD_OVERLAY_COOLDOWN_MS = 5 * 60 * 1000
 const AD_OVERLAY_STORAGE_KEY = 'ad_overlay_next_allowed_at'
 
 const wrapPressabilityConfig = (config) => {
@@ -34,19 +33,14 @@ const wrapPressabilityConfig = (config) => {
   if (config.onPress.__adOverlayWrapped) {
     return config
   }  
-  console.log("config", config)
   if (config.delayLongPress) { 
-    console.log("delayLongPress var")
     return config
-  }   
-  else{
-    console.log("delayLongPress yok")
   }
   const originalOnPress = config.onPress
   const wrappedOnPress = (...args) => {
     try {
 
-      globalThis.__TRIGGER_AD_OVERLAY?.()
+      //globalThis.__TRIGGER_AD_OVERLAY?.()
     } catch (error) {
       console.warn('Ad overlay trigger error', error)
     }
@@ -60,6 +54,7 @@ const wrapPressabilityConfig = (config) => {
 }
 
 if (!Pressability.prototype.configure.__pressAlertWrapped) {
+  
   const originalConfigure = Pressability.prototype.configure
   Pressability.prototype.configure = function patchedConfigure(config) {
     return originalConfigure.call(this, wrapPressabilityConfig(config))
@@ -72,8 +67,8 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(null)
   const [data, setData] = useState()
   const [refresh, setRefresh] = useState(true)
-  const [adOverlayVisible, setAdOverlayVisible] = useState(false)
   const [hasSubscription, setHasSubscription] = useState(false)
+  const interstitialRef = useRef(null)
 
   useEffect(() => {
     Audio.setAudioModeAsync({
@@ -173,13 +168,61 @@ export default function App() {
     }
   }, [])
 
-  const showAdOverlay = useCallback(() => {
-    setAdOverlayVisible((prev) => (prev ? prev : true))
-  }, [])
+  // Interstitial reklam yükleme ve yönetimi
+  const loadInterstitial = useCallback(() => {
+    if (hasSubscription) {
+      return
+    }
 
-  const dismissAdOverlay = useCallback(() => {
-    setAdOverlayVisible(false)
-  }, [])
+    const iosAdUnitId = 'ca-app-pub-8795169628743262/5924254442'
+    const androidAdUnitId = 'ca-app-pub-8795169628743262/7813827283'
+    const adUnitId = Platform.OS === 'ios' ? iosAdUnitId : androidAdUnitId
+
+    const interstitial = InterstitialAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    })
+
+    const subscriptions = [
+      interstitial.addAdEventListener(AdEventType.LOADED, () => {
+        // Reklam yüklendi, hazır
+      }),
+      interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
+        console.warn('AdMob Interstitial error', error)
+      }),
+      interstitial.addAdEventListener(AdEventType.CLOSED, async () => {
+        // Reklam kapandı, cooldown'u şimdi set et (tam 5 dakika)
+        try {
+          const now = Date.now()
+          await AsyncStorage.setItem(
+            AD_OVERLAY_STORAGE_KEY,
+            String(now + AD_OVERLAY_COOLDOWN_MS)
+          )
+        } catch (error) {
+          console.warn('Ad overlay cooldown set error', error)
+        }
+        // Yeni reklam yükle
+        loadInterstitial()
+      }),
+    ]
+
+    interstitial.load()
+    interstitialRef.current = interstitial
+
+    return () => {
+      subscriptions.forEach((unsubscribe) => {
+        try {
+          unsubscribe?.()
+        } catch (error) {
+          console.warn('Interstitial cleanup error', error)
+        }
+      })
+    }
+  }, [hasSubscription])
+
+  useEffect(() => {
+    const cleanup = loadInterstitial()
+    return cleanup
+  }, [loadInterstitial])
 
   const triggerAdOverlay = useCallback(async () => {
     // Abone ise reklam gösterme
@@ -187,9 +230,11 @@ export default function App() {
       return
     }
 
-    if (adOverlayVisible) {
+    if (!interstitialRef.current) {
       return
     }
+
+    // Cooldown kontrolü
     try {
       const stored = await AsyncStorage.getItem(AD_OVERLAY_STORAGE_KEY)
       const nextAllowed = stored ? parseInt(stored, 10) : 0
@@ -197,15 +242,25 @@ export default function App() {
       if (nextAllowed && now < nextAllowed) {
         return
       }
-      await AsyncStorage.setItem(
-        AD_OVERLAY_STORAGE_KEY,
-        String(now + AD_OVERLAY_COOLDOWN_MS)
-      )
     } catch (error) {
-      console.warn('Ad overlay cooldown error', error)
+      console.warn('Ad overlay cooldown check error', error)
+      return
     }
-    showAdOverlay()
-  }, [adOverlayVisible, showAdOverlay, hasSubscription])
+
+    // Reklam yüklüyse göster
+    try {
+      await interstitialRef.current.show()
+      // Reklam başarıyla gösterildi, cooldown'u reklam kapandığında set edeceğiz
+    } catch (error) {
+      console.warn('Interstitial show error', error)
+      // Reklam yüklenmemiş, yükle
+      if (interstitialRef.current) {
+        interstitialRef.current.load()
+      } else {
+        loadInterstitial()
+      }
+    }
+  }, [hasSubscription, loadInterstitial])
 
   useEffect(() => {
     globalThis.__TRIGGER_AD_OVERLAY = triggerAdOverlay
@@ -267,28 +322,6 @@ export default function App() {
 
   }
  
-  const renderAdOverlay = () => {
-    // Abone ise reklam gösterme
-    if (hasSubscription || !adOverlayVisible) {
-      return null
-    }
-    return (
-      <View style={styles.adOverlayBackdrop} pointerEvents="auto">
-        <View style={styles.adOverlayCard}>
-          <AdMobBanner
-            variant="interstitial"
-            iosAdUnitId="ca-app-pub-8795169628743262/5924254442"
-            androidAdUnitId="ca-app-pub-8795169628743262/7813827283"
-            showOnMount
-           
-            onAdFailedToLoad={dismissAdOverlay}
-            onInterstitialClosed={dismissAdOverlay}
-          />
-        </View>
-      </View>
-    )
-  }
- 
   if (refresh == true) {
     return (
       <View
@@ -301,14 +334,12 @@ export default function App() {
         }}
       >
         <Loading width={80} />
-        {renderAdOverlay()}
       </View>
     )
   } else {
     return (
       <View style={{ flex: 1, position: 'relative' }}>
         <Index startBase={start} />
-        {renderAdOverlay()}
       </View>
     )
   }
@@ -316,30 +347,3 @@ export default function App() {
 
 
 //  export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-
-const styles = StyleSheet.create({
-  adOverlayBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 9999,
-  },
-  adOverlayCard: {
-    width: '90%',
-    maxWidth: 360,
-  },
-  overlayAdPlaceholder: {
-    width: '100%',
-    minHeight: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  overlayPlaceholderText: {
-    color: '#CFD8DC',
-    fontSize: 14,
-  },
-})

@@ -289,6 +289,7 @@ export default function Index({ startBase }) {
   const [refresh, setRefresh] = React.useState()
 
   const [coin, setCoin] = React.useState(0)
+  const previousRouteName = React.useRef(null)
 
 
   let coinBadgeStyle = { marginTop: -18, marginLeft: -6, height: 30, paddingTop: 6, fontSize: 12, borderRadius: 15 }
@@ -346,10 +347,53 @@ export default function Index({ startBase }) {
 
 
   const store = createStore(userReduccer);
+
+  // Reklam gösterilmeyecek sayfalar
+  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile']
+
+  const handleNavigationStateChange = (state) => {
+    if (!state) return
+
+    // Navigation state'den aktif route'u bul
+    const getActiveRouteName = (navState) => {
+      if (!navState || typeof navState.index !== 'number') {
+        return null
+      }
+      const route = navState.routes[navState.index]
+      if (route.state) {
+        return getActiveRouteName(route.state)
+      }
+      return route.name
+    }
+
+    const currentRouteName = getActiveRouteName(state)
+
+    // İlk açılışta veya aynı sayfaya tekrar gidildiğinde reklam gösterme
+    if (!currentRouteName || currentRouteName === previousRouteName.current) {
+      return
+    }
+
+    // Belirli sayfalarda reklam gösterme
+    if (excludedRoutes.includes(currentRouteName)) {
+      previousRouteName.current = currentRouteName
+      return
+    }
+
+    // Sayfa değişti, reklam tetikle
+    previousRouteName.current = currentRouteName
+    setTimeout(() => {
+      globalThis.__TRIGGER_AD_OVERLAY?.()
+    }, 500) // Kısa bir gecikme ile daha doğal görünsün
+  }
+
   return (
     <Provider store={store}>
 
-      <NavigationContainer ref={navigationRef} onReady={flushPendingNavigation} >
+      <NavigationContainer 
+        ref={navigationRef} 
+        onReady={flushPendingNavigation}
+        onStateChange={handleNavigationStateChange}
+      >
         <Tab.Navigator
 
           initialRouteName="HomeStack"

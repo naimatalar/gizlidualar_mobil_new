@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -130,7 +130,6 @@ const RuhHaliAyetleri = () => {
   function buildAudioUrl(fileName) {
     return fileName ? `${audioBaseUrl}${fileName}` : null
   }
-
   // TrackPlayer'ı başlat
   useEffect(() => {
     let isMounted = true

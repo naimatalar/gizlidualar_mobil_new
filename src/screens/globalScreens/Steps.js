@@ -387,7 +387,7 @@ const Steps = (props) => {
 
 
                 </View>}
-
+   
 
                 {stepLenght > 1 && <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fbe0cf" }}>
                     <TouchableOpacity  delayLongPress={()=>{return true}  }  onPress={() => stepChange(-1)} style={{ justifyContent: "center", flexDirection: "column", height: 60, borderTopRightRadius: 50, alignItems: "center", backgroundColor: "#fe7013", flex: 3 }} >
