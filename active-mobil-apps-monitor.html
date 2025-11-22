@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Mobil Apps Monitor</title>
+    <!-- SignalR kütüphanesi - alternatif CDN'ler -->
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <script>
+        // SignalR yüklenmediyse alternatif CDN dene
+        if (typeof signalR === 'undefined') {
+            console.warn('SignalR yüklenemedi, alternatif CDN deneniyor...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js';
+            script.onload = () => {
+                console.log('SignalR alternatif CDN\'den yüklendi');
+                if (typeof signalR !== 'undefined') {
+                    console.log('SignalR versiyonu:', signalR.version || 'bilinmiyor');
+                }
+            };
+            script.onerror = () => {
+                console.error('SignalR alternatif CDN\'den de yüklenemedi!');
+            };
+            document.head.appendChild(script);
+        } else {
+            console.log('SignalR yüklendi, versiyon:', signalR.version || 'bilinmiyor');
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status.connected {
+            background: #10b981;
+        }
+
+        .status.disconnected {
+            background: #ef4444;
+        }
+
+        .status.connecting {
+            background: #f59e0b;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .info {
+            padding: 15px 20px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            margin: 0 20px 20px;
+            border-radius: 4px;
+        }
+
+        .info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: #667eea;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .platform-ios {
+            background: #007aff;
+            color: white;
+        }
+
+        .platform-android {
+            background: #3ddc84;
+            color: white;
+        }
+
+        .platform-unknown {
+            background: #6c757d;
+            color: white;
+        }
+
+        .pagination {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Active Mobil Apps Monitor</h1>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="refreshData()">Verileri Yenile</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Oluşturulma Tarihi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="2" class="empty-state">
+                            <div>Veri yükleniyor...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <button class="btn-secondary" onclick="previousPage()" id="prevBtn" disabled>Önceki</button>
+            <span class="pagination-info">
+                Sayfa <span id="currentPage">1</span> / <span id="totalPages">1</span>
+            </span>
+            <button class="btn-secondary" onclick="nextPage()" id="nextBtn" disabled>Sonraki</button>
+        </div>
+
+    </div>
+
+    <script>
+        const BASE_URL = 'https://sda.detambilgislem.biz.tr';
+        const HUB_URL = `${BASE_URL}/userhub`;
+        const API_URL = `${BASE_URL}/api/ActiveMobilApp/GetAll`;
+
+        let connection = null;
+        let currentPage = 1;
+        const pageSize = 20;
+        let totalCount = 0;
+
+        // SignalR bağlantısını başlat
+        async function connect() {
+            // Eğer zaten bağlıysa tekrar bağlanma
+            if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                log('SignalR zaten bağlı', 'info');
+                return;
+            }
+            
+            // Eğer bağlanıyorsa bekle
+            if (connection && (connection.state === signalR.HubConnectionState.Connecting || connection.state === signalR.HubConnectionState.Reconnecting)) {
+                log('SignalR zaten bağlanıyor, bekleniyor...', 'info');
+                return;
+            }
+
+            try {
+                // SignalR kütüphanesinin yüklendiğini kontrol et
+                if (typeof signalR === 'undefined') {
+                    log('SignalR kütüphanesi yüklenemedi! CDN bağlantısını kontrol edin.', 'error');
+                    console.error('SignalR is undefined');
+                    return;
+                }
+
+                log('SignalR kütüphanesi yüklendi ✓', 'success');
+                log('Bağlantı kuruluyor...', 'info');
+                log(`Hub URL: ${HUB_URL}`, 'info');
+                console.log('[SignalR] Attempting to connect to:', HUB_URL);
+
+                // Önce negotiate endpoint'ini test et
+                const negotiateUrl = `${HUB_URL}/negotiate`;
+                log(`Negotiate URL test ediliyor: ${negotiateUrl}`, 'info');
+                
+                try {
+                    const testResponse = await fetch(negotiateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        mode: 'cors'
+                    });
+                    
+                    if (testResponse.ok) {
+                        log('Negotiate endpoint çalışıyor ✓', 'success');
+                    } else {
+                        log(`Negotiate endpoint hatası: ${testResponse.status} ${testResponse.statusText}`, 'error');
+                    }
+                } catch (testError) {
+                    log(`Negotiate test hatası: ${testError.message}`, 'error');
+                    log('CORS veya network sorunu olabilir', 'warning');
+                }
+
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl(HUB_URL, {
+                        transport: signalR.HttpTransportType.LongPolling, // Önce LongPolling dene
+                        skipNegotiation: false,
+                        withCredentials: false
+                    })
+                    .configureLogging(signalR.LogLevel.Information)
+                    .withAutomaticReconnect({
+                        nextRetryDelayInMilliseconds: retryContext => {
+                            if (retryContext.elapsedMilliseconds < 60000) {
+                                return 2000;
+                            }
+                            return 5000;
+                        }
+                    })
+                    .build();
+
+                // Bağlantı event'leri
+                connection.onclose((error) => {
+                    if (error) {
+                        log(`Bağlantı kapandı: ${error.message}`, 'error');
+                    } else {
+                        log('Bağlantı kapandı', 'error');
+                    }
+                });
+
+                connection.onreconnecting((error) => {
+                    if (error) {
+                        log(`Yeniden bağlanılıyor... Hata: ${error.message}`, 'warning');
+                    } else {
+                        log('Yeniden bağlanılıyor...', 'warning');
+                    }
+                });
+
+                connection.onreconnected((connectionId) => {
+                    log(`Yeniden bağlandı. Connection ID: ${connectionId}`, 'success');
+                });
+
+                // sendServer metodundan gelen verileri dinle
+                connection.on('sendServer', (data) => {
+                    log(`SendServer'dan veri alındı: ${JSON.stringify(data)}`, 'success');
+                    refreshData();
+                });
+
+                log('Connection.start() çağrılıyor...', 'info');
+                console.log('[SignalR] Starting connection to:', HUB_URL);
+                
+                // Bağlantıyı başlat
+                await connection.start();
+                console.log('[SignalR] Connection started, state:', connection.state);
+                
+                // Bağlantı durumunu kontrol et
+                const state = connection.state;
+                const stateName = getStateText(state);
+                log(`Connection State: ${stateName} (${state})`, state === signalR.HubConnectionState.Connected ? 'success' : 'warning');
+                console.log('[SignalR] Connection state:', state, stateName);
+                
+                if (state === signalR.HubConnectionState.Connected) {
+                    log('SignalR bağlantısı başarıyla kuruldu ✓', 'success');
+                    console.log('[SignalR] Connected successfully');
+                    
+                    if (connection.connectionId) {
+                        log(`Connection ID: ${connection.connectionId}`, 'success');
+                        console.log('[SignalR] Connection ID:', connection.connectionId);
+                    }
+                    
+                    log('SignalR bağlantısı aktif, sendServer dinleniyor...', 'success');
+
+                    // Bağlantı durumunu sürekli kontrol et
+                    startConnectionMonitor();
+                } else {
+                    log(`Bağlantı kurulamadı. Durum: ${stateName} (${state})`, 'error');
+                    console.error('[SignalR] Connection failed, state:', state);
+                    
+                    // 3 saniye sonra tekrar dene
+                    setTimeout(() => {
+                        log('Otomatik yeniden deneme...', 'info');
+                        connect();
+                    }, 3000);
+                }
+            } catch (error) {
+                log(`Bağlantı hatası: ${error.message}`, 'error');
+                log(`Hata detayı: ${JSON.stringify(error)}`, 'error');
+                if (error.stack) {
+                    log(`Stack trace: ${error.stack}`, 'error');
+                }
+                console.error('Connection error:', error);
+                
+                // Daha detaylı hata bilgisi
+                if (error.message && error.message.includes('CORS')) {
+                    log('CORS hatası tespit edildi. Backend CORS ayarlarını kontrol edin.', 'error');
+                }
+                if (error.message && error.message.includes('404')) {
+                    log('Hub bulunamadı. Hub URL\'sini kontrol edin.', 'error');
+                }
+                if (error.message && error.message.includes('negotiation') || error.message.includes('Failed to fetch')) {
+                    log('Negotiation hatası - CORS veya network sorunu olabilir', 'error');
+                    log('Backend CORS ayarlarını ve hub endpoint\'ini kontrol edin', 'error');
+                }
+                
+                // 10 saniye sonra tekrar dene (daha uzun bekle)
+                setTimeout(() => {
+                    log('Hata sonrası otomatik yeniden deneme (10 saniye sonra)...', 'info');
+                    connect();
+                }, 10000);
+            }
+        }
+
+
+        // sendServer metodunu invoke et
+        async function invokeSendServer() {
+            if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+                log('Önce SignalR bağlantısı kurulmalı!', 'error');
+                alert('Önce SignalR bağlantısı kurulmalı!');
+                return;
+            }
+
+            try {
+                log('SendServer metodu invoke ediliyor...', 'info');
+                await connection.invoke('sendServer');
+                log('SendServer metodu başarıyla invoke edildi', 'success');
+            } catch (error) {
+                log(`SendServer invoke hatası: ${error.message}`, 'error');
+                console.error('Invoke error:', error);
+            }
+        }
+
+        // ActiveMobilApp verilerini getir
+        async function refreshData() {
+            try {
+                log(`Sayfa ${currentPage} verileri yükleniyor...`, 'info');
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        pageNumber: currentPage,
+                        pageSize: pageSize
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.isError) {
+                    throw new Error(result.message || 'Bilinmeyen hata');
+                }
+
+                const data = result.data;
+                totalCount = data.totalCount || 0;
+                const items = data.list || [];
+
+         
+
+                // Tabloyu güncelle
+                updateTable(items);
+
+                // Sayfalama kontrollerini güncelle
+                updatePagination();
+
+                log(`${items.length} kayıt yüklendi (Toplam: ${totalCount})`, 'success');
+            } catch (error) {
+                log(`Veri yükleme hatası: ${error.message}`, 'error');
+                console.error('Fetch error:', error);
+                updateTable([]);
+            }
+        }
+
+        // Tabloyu güncelle
+        function updateTable(items) {
+            const tbody = document.getElementById('tableBody');
+            
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="empty-state">
+                            <div>Henüz kayıt bulunmuyor</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td>
+                        <span class="platform-badge platform-${(item.platform || 'unknown').toLowerCase()}">
+                            ${item.platform || 'Bilinmiyor'}
+                        </span>
+                    </td>
+                    <td>${item.createDate || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Sayfalama kontrollerini güncelle
+        function updatePagination() {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages || 1;
+
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages || totalPages === 0;
+        }
+
+        // Önceki sayfa
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                refreshData();
+            }
+        }
+
+        // Sonraki sayfa
+        function nextPage() {
+            const totalPages = Math.ceil(totalCount / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                refreshData();
+            }
+        }
+
+        // Durum güncelle
+        function updateStatus(status, text) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = text;
+        }
+
+        // Log ekle (sadece console'a)
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('tr-TR');
+            const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
+            console[consoleMethod](`[${timestamp}] ${message}`);
+        }
+
+        // Bağlantı durumunu sürekli kontrol et
+        let connectionMonitorInterval = null;
+        function startConnectionMonitor() {
+            if (connectionMonitorInterval) {
+                clearInterval(connectionMonitorInterval);
+            }
+            
+            connectionMonitorInterval = setInterval(() => {
+                if (connection) {
+                    const state = connection.state;
+                    const stateText = getStateText(state);
+                    
+                    // Bağlantı durumunu logla (sadece değiştiğinde)
+                    if (state !== signalR.HubConnectionState.Connected) {
+                        log(`Bağlantı durumu: ${stateText}`, 'warning');
+                    }
+                }
+            }, 5000); // Her 5 saniyede bir kontrol et
+        }
+
+        function getStateText(state) {
+            switch(state) {
+                case signalR.HubConnectionState.Disconnected:
+                    return 'Bağlantı Yok';
+                case signalR.HubConnectionState.Connecting:
+                    return 'Bağlanıyor...';
+                case signalR.HubConnectionState.Connected:
+                    return 'Bağlı';
+                case signalR.HubConnectionState.Disconnecting:
+                    return 'Bağlantı Kesiliyor...';
+                case signalR.HubConnectionState.Reconnecting:
+                    return 'Yeniden Bağlanıyor...';
+                default:
+                    return 'Bilinmeyen';
+            }
+        }
+
+
+        // Sayfa yüklendiğinde SignalR bağlantısını kur ve verileri yükle
+        window.addEventListener('load', async () => {
+            log('Sayfa yüklendi', 'info');
+            console.log('[App] Page loaded');
+            
+            // SignalR kontrolü
+            if (typeof signalR === 'undefined') {
+                log('SignalR kütüphanesi yüklenmedi!', 'error');
+                console.error('[App] SignalR is undefined');
+            } else {
+                log('SignalR kütüphanesi mevcut', 'success');
+                console.log('[App] SignalR is available');
+            }
+            
+            // Önce verileri yükle
+            await refreshData();
+            
+            // Sonra SignalR bağlantısını kur
+            log('SignalR bağlantısı başlatılıyor...', 'info');
+            console.log('[App] Starting SignalR connection...');
+            try {
+                await connect();
+                log('SignalR bağlantı denemesi tamamlandı', 'info');
+            } catch (err) {
+                log(`SignalR bağlantı hatası: ${err.message}`, 'error');
+                console.error('[App] Connection error:', err);
+            }
+        });
+
+        // Sayfa kapanırken bağlantıyı kapat
+        window.addEventListener('beforeunload', () => {
+            if (connection) {
+                connection.stop();
+            }
+        });
+    </script>
+</body>
+</html>
+

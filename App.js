@@ -4,7 +4,7 @@ import apiConstant from './src/helpers/dataApi/apiConstant'
 
 import { GetAxios } from './src/helpers/dataApi/crud'
 import Index from './src/screens'
-import { Platform, View, Text, StyleSheet } from 'react-native'
+import { Platform, View, Text, StyleSheet, AppState } from 'react-native'
 import Pressability from 'react-native/Libraries/Pressability/Pressability'
 import Loading from './src/components/Loading'
 import './src/polyfills/backHandlerFix'
@@ -13,10 +13,42 @@ import { Audio } from 'expo-av'
 import * as Notifications from 'expo-notifications'
 import mobileAds, { MaxAdContentRating, InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads'
 import Purchases from 'react-native-purchases'
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
+import * as Device from 'expo-device'
+import * as Application from 'expo-application'
 
 const APIKeys = {
   apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
   google: 'goog_OfndwmvoPjhIPGFfcHLzfGuYPIR',
+}
+
+// UUID v4 generator
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
+// AsyncStorage'dan deviceId al veya oluştur
+const getOrCreateDeviceId = async () => {
+  const STORAGE_KEY = 'deviceId_uuid'
+  try {
+    let deviceId = await AsyncStorage.getItem(STORAGE_KEY)
+    if (!deviceId || deviceId.trim() === '') {
+      deviceId = generateUUID()
+      await AsyncStorage.setItem(STORAGE_KEY, deviceId)
+      console.log('[DeviceId] Yeni UUID oluşturuldu:', deviceId)
+    } else {
+      console.log('[DeviceId] Mevcut UUID kullanıldı:', deviceId)
+    }
+    return deviceId
+  } catch (error) {
+    console.warn('[DeviceId] AsyncStorage hatası:', error)
+    // Hata durumunda geçici UUID oluştur
+    return generateUUID()
+  }
 }
 // import { getLocales } from 'expo-localization';
 // import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
@@ -68,6 +100,9 @@ export default function App() {
   const [data, setData] = useState()
   const [refresh, setRefresh] = useState(true)
   const [hasSubscription, setHasSubscription] = useState(false)
+  const signalRConnectionRef = useRef(null)
+  const isInitializingRef = useRef(false)
+  const hasStartedRef = useRef(false)
   useEffect(() => {
     globalThis.__SET_SUBSCRIPTION = (value) => {
       setHasSubscription(!!value)
@@ -306,7 +341,7 @@ useEffect(() => {
         globalThis.__START_APP = undefined
       }
     }
-  }, [])
+  }, [start])
 
   useEffect(() => {
     // (async () => {
@@ -315,21 +350,25 @@ useEffect(() => {
     //     console.log('Yay! I have user permission to track data');
     //   }
     // })();
-    try {
     
-
-      
-      start()
-
-    } catch (error) {
-      throw error
+    // Sadece bir kez çalıştır
+    if (hasStartedRef.current) {
+      console.log('[App] start() zaten çalıştırıldı, atlanıyor')
+      return
     }
+    
+    hasStartedRef.current = true
+    try {
+      start()
+    } catch (error) {
+      console.error('[App] start() hatası:', error)
+      hasStartedRef.current = false // Hata durumunda tekrar denemeye izin ver
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // start fonksiyonunu dependency'den çıkarıyoruz çünkü sadece bir kez çalışmasını istiyoruz
 
 
-  }, [])
-
-
-  const start = async () => { 
+  const start = useCallback(async () => { 
     setRefresh(true)
     // var lcl=getLocales();
     
@@ -342,13 +381,145 @@ useEffect(() => {
     setTimeout(() => {
       setRefresh(false)
 
-    }, 1000);
+    }, 1000);   
+
+    // SignalR bağlantısını başlat
+    await initializeSignalR()
 
 
 
 
 
-  }
+  }, [])
+var ds=0;
+  const initializeSignalR = useCallback(async () => {
+  
+    if(ds>1){
+      return
+    }
+    ds=1;
+  
+    // Eğer zaten bağlantı kuruluyorsa, tekrar başlatma
+    if (isInitializingRef.current) {
+      console.log('[SignalR] Bağlantı zaten kuruluyor, iptal edildi')
+      return
+    }
+
+    // Eğer bağlantı zaten varsa ve durumu uygunsa, tekrar bağlanma
+    if (signalRConnectionRef.current) {
+      const currentState = signalRConnectionRef.current.state
+      console.log('[SignalR] Mevcut bağlantı durumu:', currentState)
+      
+      // Zaten bağlıysa veya bağlanıyorsa, tekrar bağlanma
+      if (currentState === 'Connected' || currentState === 'Connecting' || currentState === 'Reconnecting') {
+        console.log('[SignalR] Bağlantı zaten aktif, tekrar bağlanma iptal edildi')
+        return
+      }
+      
+      // Disconnected veya Disconnecting durumundaysa önce kapat
+      if (currentState === 'Disconnected' || currentState === 'Disconnecting') {
+        try {
+          await signalRConnectionRef.current.stop()
+          console.log('[SignalR] Eski bağlantı kapatıldı')
+        } catch (stopError) {
+          console.warn('[SignalR] Eski bağlantı kapatılırken hata:', stopError)
+        }
+        signalRConnectionRef.current = null
+      }
+    }
+
+    try {
+      isInitializingRef.current = true
+
+      // DeviceId'yi AsyncStorage'dan al veya yeni UUID oluştur
+      const deviceId = await getOrCreateDeviceId()
+
+      const platform = Platform.OS === 'ios' ? 'ios' : 'android'
+      console.log('[SignalR] Platform:', platform)
+      console.log('[SignalR] DeviceId son durum:', deviceId)
+      
+      // DeviceId ve Platform bilgisini query string ile gönder
+      const hubUrl = deviceId 
+        ? `${apiConstant.SignalRHubUrl}?deviceId=${encodeURIComponent(deviceId)}&platform=${platform}`
+        : `${apiConstant.SignalRHubUrl}?platform=${platform}`
+      
+      console.log('[SignalR] Hub URL:', hubUrl)
+
+      const connection = new HubConnectionBuilder()
+        .withUrl(hubUrl)
+        .configureLogging(LogLevel.Information)
+        .withAutomaticReconnect({
+          nextRetryDelayInMilliseconds: retryContext => {
+            if (retryContext.elapsedMilliseconds < 60000) {
+              return 2000
+            }
+            return 5000
+          }
+        })
+        .build()
+
+      // Bağlantı event'leri
+      connection.onclose((error) => {
+        console.log('[SignalR] Connection closed', error)
+        // Bağlantı kapandığında ref'i temizle
+        if (signalRConnectionRef.current === connection) {
+          signalRConnectionRef.current = null
+          isInitializingRef.current = false
+        }
+      })
+
+      connection.onreconnecting((error) => {
+        console.log('[SignalR] Reconnecting', error)
+      })
+
+      connection.onreconnected((connectionId) => {
+        console.log('[SignalR] Reconnected', connectionId)
+      })
+
+      // Bağlantıyı başlat
+      await connection.start()
+      console.log('[SignalR] Connected successfully')
+      
+      signalRConnectionRef.current = connection
+      isInitializingRef.current = false
+    } catch (error) {
+      console.warn('[SignalR] Connection error:', error)
+      // Hata durumunda ref'i temizle
+      signalRConnectionRef.current = null
+      isInitializingRef.current = false
+    }
+  }, [])
+
+  // AppState değişikliklerini dinle
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState) => {
+      if (nextAppState === 'active') {
+        const currentState = signalRConnectionRef.current?.state
+        // Sadece bağlantı yoksa veya Disconnected durumundaysa bağlan
+        if (!signalRConnectionRef.current || currentState === 'Disconnected') {
+          console.log('[SignalR] AppState active, bağlantı başlatılıyor...')
+          await initializeSignalR()
+        } else {
+          console.log('[SignalR] AppState active, mevcut bağlantı durumu:', currentState)
+        }
+      }
+    })
+
+    return () => {
+      subscription?.remove()
+    }
+  }, [initializeSignalR])
+
+  // Component unmount olduğunda bağlantıyı kapat
+  useEffect(() => {
+    return () => {
+      if (signalRConnectionRef.current) {
+        signalRConnectionRef.current.stop().catch(err => {
+          console.warn('SignalR stop error:', err)
+        })
+      }
+    }
+  }, [])
  
   if (refresh == true) {
     return (

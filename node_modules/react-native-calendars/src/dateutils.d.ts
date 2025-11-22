@@ -1,7 +1,7 @@
 /// <reference types="xdate" />
 export declare function sameMonth(a?: XDate, b?: XDate): boolean;
 export declare function sameDate(a?: XDate, b?: XDate): boolean;
-export declare function onSameDateRange({ firstDay, secondDay, numberOfDays, firstDateInRange, }: {
+export declare function onSameDateRange({ firstDay, secondDay, numberOfDays, firstDateInRange }: {
     firstDay: string;
     secondDay: string;
     numberOfDays: number;
@@ -10,8 +10,8 @@ export declare function onSameDateRange({ firstDay, secondDay, numberOfDays, fir
 export declare function sameWeek(a: string, b: string, firstDayOfWeek: number): boolean | undefined;
 export declare function isPastDate(date: string): boolean;
 export declare function isToday(date?: XDate | string): boolean;
-export declare function isGTE(a: XDate, b: XDate): boolean;
-export declare function isLTE(a: XDate, b: XDate): boolean;
+export declare function isGTE(a: XDate, b: XDate): boolean | undefined;
+export declare function isLTE(a: XDate, b: XDate): boolean | undefined;
 export declare function formatNumbers(date: any): any;
 export declare function month(date: XDate): import("xdate")[];
 export declare function weekDayNames(firstDayOfWeek?: number): any;
