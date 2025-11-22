@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import Purchases from 'react-native-purchases'
 import { LangApp } from '../../components/Language'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const APIKeys = {
     apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
@@ -21,7 +22,15 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
     const [subscriptionPackage, setSubscriptionPackage] = useState(null)
     const [purchasing, setPurchasing] = useState(false)
     const [resetting, setResetting] = useState(false)
-
+    const [backgroundPlayControl, setBackgroundPlayControl] = useState("true")
+    useEffect(() => {
+      const getBackgroundPlayControl = async () => {
+  
+        const bc = await AsyncStorage.getItem("backgroundPlay")
+        setBackgroundPlayControl(bc)
+      } 
+      getBackgroundPlayControl()
+    }, [])
     useEffect(() => {
         setupRevenueCat()
         console.log("start", start)
@@ -123,6 +132,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                 // Abonelik kontrolünün tamamlanması için kısa bir bekleme
                 await new Promise(resolve => setTimeout(resolve, 500))
                 alert("Satın alma başarılı")
+                globalThis.__SET_SUBSCRIPTION?.(true)
                 globalThis.__START_APP()
                 // Satın alma başarılı, navigation goBack yap
                 if (navigation.canGoBack()) {
@@ -147,6 +157,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                 await new Promise(resolve => setTimeout(resolve, 500))
 
                 alert("Satın alma başarılı")
+                globalThis.__SET_SUBSCRIPTION?.(true)
                 globalThis.__START_APP()
                 // Satın alma başarılı, navigation goBack yap
                 if (navigation.canGoBack()) {
@@ -320,10 +331,10 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                         <Text style={styles.featureBullet}>•</Text>
                         <Text style={styles.featureText}>Tüm reklamlar kaldırılır</Text>
                     </View>
-                    <View style={styles.featureItem}>
+                {backgroundPlayControl == "false" && <View style={styles.featureItem}>
                         <Text style={styles.featureBullet}>•</Text>
                         <Text style={styles.featureText}>Uygulama arka plandayken dinleme özelliği</Text>
-                    </View>
+                    </View>}
                 </View>
 
                 <View style={styles.packageContainer}>

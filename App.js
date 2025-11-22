@@ -23,13 +23,13 @@ const APIKeys = {
 
 // "expo-dev-client": "^2.4.11",
 
-const AD_OVERLAY_COOLDOWN_MS = 5 * 60 * 1000
+const AD_OVERLAY_COOLDOWN_MS = 2 * 60 * 1000
 const AD_OVERLAY_STORAGE_KEY = 'ad_overlay_next_allowed_at'
-    
+   
 const wrapPressabilityConfig = (config) => {
   if (!config || typeof config.onPress !== 'function') {
     return config
-  } 
+  }
   if (config.onPress.__adOverlayWrapped) {
     return config
   }  
@@ -68,7 +68,25 @@ export default function App() {
   const [data, setData] = useState()
   const [refresh, setRefresh] = useState(true)
   const [hasSubscription, setHasSubscription] = useState(false)
+  useEffect(() => {
+    globalThis.__SET_SUBSCRIPTION = (value) => {
+      setHasSubscription(!!value)
+    }
+    return () => {
+      delete globalThis.__SET_SUBSCRIPTION
+    }
+  }, [])
   const interstitialRef = useRef(null)
+
+useEffect(() => {
+  const getToken = async () => {
+    var token = await GetAxios(apiConstant.BaseUrl + "/api/backgroundplaystatus/control").then(x => { return x }).catch(x => { return false })
+ 
+    await AsyncStorage.setItem("backgroundPlay", token.data.toString())
+  }
+  getToken()
+
+}, [])
 
   useEffect(() => {
     Audio.setAudioModeAsync({
@@ -111,6 +129,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+   
     const checkSubscription = async () => {
       try {
         if (Platform.OS === 'android') {
@@ -149,6 +168,15 @@ export default function App() {
 
     // AppState listener kaldırıldı - sadece uygulama açılışında kontrol ediliyor
   }, [])
+
+ useEffect(() => {
+   globalThis.__IS_SUBSCRIBED = !!hasSubscription
+   return () => {
+     if (globalThis.__IS_SUBSCRIBED !== undefined) {
+       globalThis.__IS_SUBSCRIBED = false
+     }
+   }
+ }, [hasSubscription])
 
   useEffect(() => {
     Notifications.getLastNotificationResponseAsync()

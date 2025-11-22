@@ -492,25 +492,23 @@ const AnalysisModal = ({ visible, desireText }) => {
   }
 
   return (
-    <Modal visible transparent animationType="fade">
-      <View style={styles.analysisBackdrop}>
-        <View style={styles.analysisContent}>
-          <Animated.View style={[styles.analysisPulse, { opacity }]} />
-          <MaterialCommunityIcons name="robot-happy" size={36} color="#FFF" style={styles.analysisIcon} />
-          <Text style={styles.analysisTitle}>{LangApp('analizEdiliyor')}</Text>
-          <Text style={styles.analysisSubtitle}>{LangApp('aiMatchInfo')}</Text>
-          <View style={styles.analysisStream}>
-            {pairs.map((pair) => (
-              <View key={pair.id} style={styles.analysisRow}>
-                <Text style={styles.analysisUserText}>{pair.userWord}</Text>
-                <MaterialCommunityIcons name="arrow-right" size={18} color="#FFAB40" />
-                <Text style={styles.analysisTagText}>{pair.tagWord}</Text>
-              </View>
-            ))}
-          </View>
+    <View style={styles.analysisBackdrop}>
+      <View style={styles.analysisContent}>
+        <Animated.View style={[styles.analysisPulse, { opacity }]} />
+        <MaterialCommunityIcons name="robot-happy" size={36} color="#FFF" style={styles.analysisIcon} />
+        <Text style={styles.analysisTitle}>{LangApp('analizEdiliyor')}</Text>
+        <Text style={styles.analysisSubtitle}>{LangApp('aiMatchInfo')}</Text>
+        <View style={styles.analysisStream}>
+          {pairs.map((pair) => (
+            <View key={pair.id} style={styles.analysisRow}>
+              <Text style={styles.analysisUserText}>{pair.userWord}</Text>
+              <MaterialCommunityIcons name="arrow-right" size={18} color="#FFAB40" />
+              <Text style={styles.analysisTagText}>{pair.tagWord}</Text>
+            </View>
+          ))}
         </View>
       </View>
-    </Modal>
+    </View>
   )
 }
 
@@ -632,6 +630,9 @@ const ProfileModal = ({
         ]}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
+        {analysisVisible && (
+          <AnalysisModal visible={analysisVisible} desireText={desireText} />
+        )}
         <TouchableOpacity
           activeOpacity={1}
           style={StyleSheet.absoluteFill}
@@ -836,12 +837,7 @@ const ProfileModal = ({
     </Modal>
   )
 
-  return (
-    <>
-      {content}
-      <AnalysisModal visible={analysisVisible} desireText={desireText} />
-    </>
-  )
+  return content
 }
 
 const OzelAlanim = () => {
@@ -1762,11 +1758,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   analysisBackdrop: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    zIndex: 9999,
   },
   analysisContent: {
     width: '100%',

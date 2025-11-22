@@ -27,6 +27,7 @@ import { PostAxiosAnonym } from '../../helpers/dataApi/crud'
 import AbdussamedImage from '../../assets/abdussamed.jpg'
 import AdmobViewBanner from '../../components/ads/AdmobViewBanner'
 import { setupTrackPlayer, addTrack, playTrack, pauseTrack, stopTrack, seekTo, reset, getState } from '../../services/trackPlayerService'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const PAGE_SIZE = 500
 
@@ -63,7 +64,16 @@ const Sureler = () => {
   const progress = useProgress(500) // Her 500ms'de bir güncelle
   const positionIntervalRef = useRef(null)
   const lastPositionRef = useRef(0) // Son pozisyonu takip et
+  const [backgroundPlayControl, setBackgroundPlayControl] = useState("true")
+  useEffect(() => {
+    const getBackgroundPlayControl = async () => {
 
+      const bc = await AsyncStorage.getItem("backgroundPlay")
+      setBackgroundPlayControl(bc)
+
+    }
+    getBackgroundPlayControl()
+  }, [])
   const audioBaseUrl = `${apiConstant.AUDIOBASEURL}/`
 
   function buildAudioUrl(fileName) {
@@ -100,7 +110,7 @@ const Sureler = () => {
           apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
           google: 'goog_OfndwmvoPjhIPGFfcHLzfGuYPIR',
         }
-        
+
         if (Platform.OS === 'android') {
           await Purchases.configure({ apiKey: APIKeys.google })
         } else {
@@ -121,26 +131,29 @@ const Sureler = () => {
 
   // AppState listener - Arka plana geçildiğinde abone değilse ses çalmayı durdur
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', async (nextAppState) => {
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
-        // Abone değilse ses çalmayı durdur
-        if (!hasSubscription) {
-          try {
-            const currentState = await getState()
-            if (currentState === State.Playing) {
-              await pauseTrack()
-              console.log('Arka plana geçildi, abone olmadığı için ses durduruldu')
+    if (backgroundPlayControl == "false") {
+      
+      const subscription = AppState.addEventListener('change', async (nextAppState) => {
+        if (nextAppState === 'background' || nextAppState === 'inactive') {
+          // Abone değilse ses çalmayı durdur
+          if (!hasSubscription) {
+            try {
+              const currentState = await getState()
+              if (currentState === State.Playing) {
+                await pauseTrack()
+                console.log('Arka plana geçildi, abone olmadığı için ses durduruldu')
+              }
+            } catch (error) {
+              console.warn('Background pause error', error)
             }
-          } catch (error) {
-            console.warn('Background pause error', error)
           }
         }
-      }
-    })
-
-    return () => {
+      }) 
+      return () => {
       subscription?.remove()
     }
+    }
+   
   }, [hasSubscription])
 
   // Playback state'i güncelle
@@ -155,13 +168,13 @@ const Sureler = () => {
       const remaining = progress.duration - progress.position
       const isNearEnd = remaining < 0.5 && remaining >= 0
       const isPlaying = currentPlaybackState === State.Playing || playbackState === State.Playing
-      
+
       // Sadece son 0.5 saniyede ve çalıyorken kontrol et
       if (isNearEnd && isPlaying && !trackEndedRef.current) {
         trackEndedRef.current = true // Flag'i set et, tekrar tetiklenmesin
-        
+
         console.log('Track bitti (progress kontrolü), autoPlayNext:', autoPlayNext, 'randomPlay:', randomPlay)
-        
+
         // Kısa bir delay ile bir sonraki sureye geç
         setTimeout(() => {
           if (randomPlay && items.length > 0) {
@@ -176,12 +189,12 @@ const Sureler = () => {
           }
         }, 500)
       }
-      
+
       // Eğer pozisyon geri döndüyse (yeni track başladı) flag'i sıfırla
       if (progress.position < lastPositionRef.current) {
         trackEndedRef.current = false
       }
-      
+
       lastPositionRef.current = progress.position
     } else if (!activeId) {
       lastPositionRef.current = 0
@@ -196,58 +209,11 @@ const Sureler = () => {
       if (!event || !event.type) {
         return
       }
-    if (event.type === Event.PlaybackTrackChanged && event.nextTrack == null) {
-      // Track bitti
-      resetPlayerState(false)
-      setCurrentPlaybackState(State.None)
-      
-      // Rastgele oynat veya otomatik oynat kontrolü
-      if (randomPlay && items.length > 0) {
-        // Rastgele sure oynat aktifse yeni rastgele sure oynat
-        setTimeout(() => {
-          playRandomSure()
-        }, 500)
-      } else if (autoPlayNext && activeId && items.length > 0) {
-        // Otomatik oynat aktifse bir sonraki sureyi oynat
-        const currentIndex = items.findIndex(item => item.id === activeId)
-        if (currentIndex !== -1 && currentIndex < items.length - 1) {
-          const nextItem = items[currentIndex + 1]
-          setTimeout(() => {
-            loadAndPlay(nextItem)
-          }, 500) // Kısa bir delay ile
-        }
-      }
-    }
-    
-    if (event.type === Event.PlaybackEnded) {
-      // Track tamamen bitti
-      if (randomPlay && items.length > 0) {
-        // Rastgele sure oynat aktifse yeni rastgele sure oynat
-        setTimeout(() => {
-          playRandomSure()
-        }, 500)
-      } else if (autoPlayNext && activeId && items.length > 0) {
-        // Otomatik oynat aktifse bir sonraki sureyi oynat
-        const currentIndex = items.findIndex(item => item.id === activeId)
-        if (currentIndex !== -1 && currentIndex < items.length - 1) {
-          const nextItem = items[currentIndex + 1]
-          setTimeout(() => {
-            loadAndPlay(nextItem)
-          }, 500)
-        }
-      }
-    }
-    
-    if (event.type === Event.PlaybackState) {
-      // Playback state değiştiğinde güncelle
-      // iOS'ta state güncellemesini daha agresif yap
-      const newState = await getState()
-      setCurrentPlaybackState(newState)
-      
-      // State Ended veya Stopped olduğunda track bitti demektir
-      if (newState === State.Ended || newState === State.Stopped) {
-        console.log('Track bitti (State.Ended/Stopped), autoPlayNext:', autoPlayNext, 'randomPlay:', randomPlay)
-        
+      if (event.type === Event.PlaybackTrackChanged && event.nextTrack == null) {
+        // Track bitti
+        resetPlayerState(false)
+        setCurrentPlaybackState(State.None)
+
         // Rastgele oynat veya otomatik oynat kontrolü
         if (randomPlay && items.length > 0) {
           // Rastgele sure oynat aktifse yeni rastgele sure oynat
@@ -259,27 +225,74 @@ const Sureler = () => {
           const currentIndex = items.findIndex(item => item.id === activeId)
           if (currentIndex !== -1 && currentIndex < items.length - 1) {
             const nextItem = items[currentIndex + 1]
-            console.log('Bir sonraki sure oynatılıyor:', nextItem.name)
             setTimeout(() => {
               loadAndPlay(nextItem)
-            }, 500)
-          } else {
-            console.log('Son sure çalındı, otomatik oynat durduruldu')
+            }, 500) // Kısa bir delay ile
           }
         }
       }
-      
-      // iOS'ta ekstra bir kontrol daha yap
-      if (Platform.OS === 'ios') {
-        setTimeout(async () => {
-          const verifiedState = await getState()
-          if (verifiedState !== newState) {
-            setCurrentPlaybackState(verifiedState)
+
+      if (event.type === Event.PlaybackEnded) {
+        // Track tamamen bitti
+        if (randomPlay && items.length > 0) {
+          // Rastgele sure oynat aktifse yeni rastgele sure oynat
+          setTimeout(() => {
+            playRandomSure()
+          }, 500)
+        } else if (autoPlayNext && activeId && items.length > 0) {
+          // Otomatik oynat aktifse bir sonraki sureyi oynat
+          const currentIndex = items.findIndex(item => item.id === activeId)
+          if (currentIndex !== -1 && currentIndex < items.length - 1) {
+            const nextItem = items[currentIndex + 1]
+            setTimeout(() => {
+              loadAndPlay(nextItem)
+            }, 500)
           }
-        }, 50)
+        }
       }
-    }
-  })
+
+      if (event.type === Event.PlaybackState) {
+        // Playback state değiştiğinde güncelle
+        // iOS'ta state güncellemesini daha agresif yap
+        const newState = await getState()
+        setCurrentPlaybackState(newState)
+
+        // State Ended veya Stopped olduğunda track bitti demektir
+        if (newState === State.Ended || newState === State.Stopped) {
+          console.log('Track bitti (State.Ended/Stopped), autoPlayNext:', autoPlayNext, 'randomPlay:', randomPlay)
+
+          // Rastgele oynat veya otomatik oynat kontrolü
+          if (randomPlay && items.length > 0) {
+            // Rastgele sure oynat aktifse yeni rastgele sure oynat
+            setTimeout(() => {
+              playRandomSure()
+            }, 500)
+          } else if (autoPlayNext && activeId && items.length > 0) {
+            // Otomatik oynat aktifse bir sonraki sureyi oynat
+            const currentIndex = items.findIndex(item => item.id === activeId)
+            if (currentIndex !== -1 && currentIndex < items.length - 1) {
+              const nextItem = items[currentIndex + 1]
+              console.log('Bir sonraki sure oynatılıyor:', nextItem.name)
+              setTimeout(() => {
+                loadAndPlay(nextItem)
+              }, 500)
+            } else {
+              console.log('Son sure çalındı, otomatik oynat durduruldu')
+            }
+          }
+        }
+
+        // iOS'ta ekstra bir kontrol daha yap
+        if (Platform.OS === 'ios') {
+          setTimeout(async () => {
+            const verifiedState = await getState()
+            if (verifiedState !== newState) {
+              setCurrentPlaybackState(verifiedState)
+            }
+          }, 50)
+        }
+      }
+    })
 
   async function fetchSureler() {
     if (loading) {
@@ -333,7 +346,7 @@ const Sureler = () => {
     if (items.length === 0) {
       return
     }
-    
+
     try {
       const randomIndex = Math.floor(Math.random() * items.length)
       const randomItem = items[randomIndex]
@@ -369,10 +382,10 @@ const Sureler = () => {
     try {
       console.log('loadAndPlay başladı, item:', item)
       console.log('item.mp3FileName:', item.mp3FileName)
-      
+
       const audioUrl = buildAudioUrl(item.mp3FileName)
       console.log('buildAudioUrl sonucu:', audioUrl)
-      
+
       if (!audioUrl) {
         throw new Error('Ses dosyası bulunamadı - mp3FileName eksik veya null')
       }
@@ -401,10 +414,10 @@ const Sureler = () => {
       // Çalmaya başla
       await playTrack()
       console.log('playTrack() çağrıldı')
-      
+
       const stateAfterPlay = await getState()
       console.log('Play sonrası state:', stateAfterPlay)
-      
+
       setCurrentPlaybackState(State.Playing)
       setIsPreparing(false)
       // iOS'ta state güncellemesini garanti etmek için
@@ -553,34 +566,37 @@ const Sureler = () => {
             <Text style={styles.heroSubtitle}>{'Abdussamed Kıraatleri'}</Text>
           </View>
         </View>
-        
-        {!hasSubscription ? (
-          <TouchableOpacity delayLongPress={()=>{return true}  }  
-            onPress={() => {
-              navigation.navigate('RemoveAds')
-            }}
-            activeOpacity={0.7}
-            style={styles.backgroundPlayTextButton}
-          >
-            <MaterialCommunityIcons
-              name="play"
-              size={16}
-              color="#FFFFFF"
-              style={styles.backgroundPlayIcon}
-            />
-            <Text style={styles.backgroundPlayText}>Arkaplanda Çal Özelliğini Aç</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.backgroundPlayActive}>
-            <MaterialCommunityIcons
-              name="check-circle"
-              size={20}
-              color="#2E7D32"
-              style={styles.backgroundPlayIcon}
-            />
-            <Text style={styles.backgroundPlayActiveText}>Arka Planda Çalma Özelliği Aktif</Text>
-          </View>
-        )}
+        {backgroundPlayControl == "false" && <View>
+
+          {!hasSubscription ? (
+            <TouchableOpacity delayLongPress={() => { return true }}
+              onPress={() => {
+                navigation.navigate('RemoveAds')
+              }}
+              activeOpacity={0.7}
+              style={styles.backgroundPlayTextButton}
+            >
+              <MaterialCommunityIcons
+                name="play"
+                size={16}
+                color="#FFFFFF"
+                style={styles.backgroundPlayIcon}
+              />
+              <Text style={styles.backgroundPlayText}>Arkaplanda Çal Özelliğini Aç</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.backgroundPlayActive}>
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={20}
+                color="#2E7D32"
+                style={styles.backgroundPlayIcon}
+              />
+              <Text style={styles.backgroundPlayActiveText}>Arka Planda Çalma Özelliği Aktif</Text>
+            </View>
+          )}
+        </View>}
+
 
         {/* Switch'ler */}
         <View style={styles.switchesContainer}>
@@ -595,7 +611,7 @@ const Sureler = () => {
                 thumbColor={autoPlayNext ? '#FFFFFF' : '#9E9E9E'}
               />
             </View>
-            
+
             <View style={styles.switchItem}>
               <MaterialCommunityIcons name="shuffle" size={18} color="#311B92" style={styles.switchIcon} />
               <Text style={styles.switchLabel}>Rastgele Oynat</Text>
@@ -614,7 +630,7 @@ const Sureler = () => {
             </View>
           </View>
         </View>
-        
+
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
@@ -626,8 +642,8 @@ const Sureler = () => {
               tintColor='#4A148C'
             />
           }
-        > 
-           
+        >
+
           {loading && items.length === 0 ? (
             <View style={styles.loadingWrapper}>
               <ActivityIndicator color='#4A148C' size='small' />
@@ -640,19 +656,19 @@ const Sureler = () => {
               <Text style={styles.emptyText}>{LangApp('kayitBulunamadi')}</Text>
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
             </View>
-          ) : null} 
+          ) : null}
 
           {items.map((item) => {
             const isCurrent = activeId === item.id
             // Playback state kontrolü - önce currentPlaybackState, sonra playbackState hook'u, son olarak getState ile kontrol
             const isPlaying = isCurrent && (
-              currentPlaybackState === State.Playing || 
+              currentPlaybackState === State.Playing ||
               playbackState === State.Playing
             )
             const isBuffering = isCurrent && (
-              currentPlaybackState === State.Loading || 
-              currentPlaybackState === State.Buffering || 
-              playbackState === State.Loading || 
+              currentPlaybackState === State.Loading ||
+              currentPlaybackState === State.Buffering ||
+              playbackState === State.Loading ||
               playbackState === State.Buffering
             )
             const shownPosition = isCurrent ? (isSeeking ? seekValue : progress.position) : 0
@@ -672,9 +688,9 @@ const Sureler = () => {
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>{item.name}</Text>
                 </View>
-             
+
                 <View style={styles.controlsRow}>
-                  <TouchableOpacity delayLongPress={()=>{return true}  }  
+                  <TouchableOpacity delayLongPress={() => { return true }}
                     onPress={() => handleSeekBy(item, -10)}
                     style={[styles.controlButton, (controlsDisabled || isBuffering) && styles.controlDisabled]}
                     disabled={controlsDisabled || isBuffering}
@@ -693,7 +709,7 @@ const Sureler = () => {
                       isCurrent && isPlaying ? styles.playButtonActive : null,
                     ]}
                     disabled={isPreparing}
-                    delayLongPress={()=>{return true}  }  
+                    delayLongPress={() => { return true }}
                   >
                     {isPreparing && isCurrent ? (
                       <ActivityIndicator color='#FFFFFF' size='small' />
@@ -706,7 +722,7 @@ const Sureler = () => {
                     )}
                   </TouchableOpacity>
 
-                  <TouchableOpacity delayLongPress={()=>{return true}  }  
+                  <TouchableOpacity delayLongPress={() => { return true }}
                     onPress={() => handleStopPress(item)}
                     style={[styles.controlButton, controlsDisabled && styles.controlDisabled]}
                     disabled={controlsDisabled}
@@ -718,7 +734,7 @@ const Sureler = () => {
                     />
                   </TouchableOpacity>
 
-                  <TouchableOpacity delayLongPress={()=>{return true}  }  
+                  <TouchableOpacity delayLongPress={() => { return true }}
                     onPress={() => handleSeekBy(item, 10)}
                     style={[styles.controlButton, (controlsDisabled || isBuffering) && styles.controlDisabled]}
                     disabled={controlsDisabled || isBuffering}
@@ -751,7 +767,7 @@ const Sureler = () => {
 
                 {!!item.description ? (
                   <>
-                    <TouchableOpacity delayLongPress={()=>{return true}  }  
+                    <TouchableOpacity delayLongPress={() => { return true }}
                       onPress={() => toggleDescription(item.id)}
                       style={styles.collapseToggle}
                       activeOpacity={0.7}
@@ -772,14 +788,14 @@ const Sureler = () => {
             )
           })}
         </ScrollView>
-       
+
       </View>
       <AdmobViewBanner
-                  iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
-                  androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
-                  bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
-                  style={{ alignItems: 'center', paddingVertical: 4 }}
-                />
+        iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
+        androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
+        bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
+        style={{ alignItems: 'center', paddingVertical: 4 }}
+      />
     </LinearGradient>
   )
 }
@@ -789,9 +805,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingBottom: 0,
-    paddingTop:0
+    paddingTop: 0
 
-  
+
   },
   gradient: {
     flex: 1,
@@ -952,7 +968,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: '500',
-   
+
   },
   backgroundPlayActive: {
     flexDirection: 'row',

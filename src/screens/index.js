@@ -349,7 +349,7 @@ export default function Index({ startBase }) {
   const store = createStore(userReduccer);
 
   // Reklam gösterilmeyecek sayfalar
-  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile']
+  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile','HomeStack','Steps',"OzelAlanim","Home"]
 
   const handleNavigationStateChange = (state) => {
     if (!state) return
@@ -383,10 +383,10 @@ export default function Index({ startBase }) {
     previousRouteName.current = currentRouteName
     setTimeout(() => {
       globalThis.__TRIGGER_AD_OVERLAY?.()
-    }, 500) // Kısa bir gecikme ile daha doğal görünsün
+    }, 1000) // Kısa bir gecikme ile daha doğal görünsün
   }
 
-  return ( 
+  return (
     <Provider store={store}>
 
       <NavigationContainer 

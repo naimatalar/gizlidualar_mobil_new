@@ -24,9 +24,10 @@ import { LangApp } from '../../components/Language'
 import { matchAyet } from '../../helpers/dataApi/prescriptionService'
 import { setupTrackPlayer, addTrack, playTrack, pauseTrack, stopTrack, seekTo, reset, getState } from '../../services/trackPlayerService'
 import AdmobViewBanner from '../../components/ads/AdmobViewBanner'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const PAGE_SIZE = 500
-const analysisTagSamples = ['huzur', 'uyku','para','bereket', 'mutluluk', 'şifa', 'bolluk', 'umut','bereket', 'denge', 'sabır']
+const analysisTagSamples = ['huzur', 'uyku', 'para', 'bereket', 'mutluluk', 'şifa', 'bolluk', 'umut', 'bereket', 'denge', 'sabır']
 
 function formatTime(seconds = 0) {
   const safeValue = Math.max(0, Math.floor(seconds))
@@ -127,6 +128,16 @@ const RuhHaliAyetleri = () => {
 
   const audioBaseUrl = `${apiConstant.AUDIOBASEURL}/`
 
+  const [backgroundPlayControl, setBackgroundPlayControl] = useState("true")
+  useEffect(() => {
+    const getBackgroundPlayControl = async () => {
+
+      const bc = await AsyncStorage.getItem("backgroundPlay")
+      setBackgroundPlayControl(bc)
+    } 
+    getBackgroundPlayControl()
+  }, [])
+
   function buildAudioUrl(fileName) {
     return fileName ? `${audioBaseUrl}${fileName}` : null
   }
@@ -161,7 +172,7 @@ const RuhHaliAyetleri = () => {
           apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
           google: 'goog_OfndwmvoPjhIPGFfcHLzfGuYPIR',
         }
-        
+
         if (Platform.OS === 'android') {
           await Purchases.configure({ apiKey: APIKeys.google })
         } else {
@@ -208,27 +219,27 @@ const RuhHaliAyetleri = () => {
       if (!event || !event.type) {
         return
       }
-    if (event.type === Event.PlaybackTrackChanged && event.nextTrack == null) {
-      // Track bitti
-      resetPlayerState()
-      setCurrentPlaybackState(State.None)
-    }
-    if (event.type === Event.PlaybackState) {
-      // Playback state değiştiğinde güncelle
-      // iOS'ta state güncellemesini daha agresif yap
-      const newState = await getState()
-      setCurrentPlaybackState(newState)
-      // iOS'ta ekstra bir kontrol daha yap
-      if (Platform.OS === 'ios') {
-        setTimeout(async () => {
-          const verifiedState = await getState()
-          if (verifiedState !== newState) {
-            setCurrentPlaybackState(verifiedState)
-          }
-        }, 50)
+      if (event.type === Event.PlaybackTrackChanged && event.nextTrack == null) {
+        // Track bitti
+        resetPlayerState()
+        setCurrentPlaybackState(State.None)
       }
-    }
-  })
+      if (event.type === Event.PlaybackState) {
+        // Playback state değiştiğinde güncelle
+        // iOS'ta state güncellemesini daha agresif yap
+        const newState = await getState()
+        setCurrentPlaybackState(newState)
+        // iOS'ta ekstra bir kontrol daha yap
+        if (Platform.OS === 'ios') {
+          setTimeout(async () => {
+            const verifiedState = await getState()
+            if (verifiedState !== newState) {
+              setCurrentPlaybackState(verifiedState)
+            }
+          }, 50)
+        }
+      }
+    })
 
   function resetPlayerState() {
     setSeekValue(0)
@@ -438,21 +449,21 @@ const RuhHaliAyetleri = () => {
 
     try {
       console.log('handleMatchAyet: Starting match...')
-      
+
       // Önce 4 saniye bekle (analiz animasyonu için)
       await new Promise((resolve) => setTimeout(resolve, 4000))
-      
+
       // Timeout ile güvenli hale getir
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('İstek zaman aşımına uğradı')), 25000)
       )
-      
+
       console.log('handleMatchAyet: Calling matchAyet...')
       const matchPromise = matchAyet(trimmedText).catch((err) => {
         console.error('handleMatchAyet: matchAyet promise rejected:', err)
         throw err
       })
-      
+
       const result = await Promise.race([matchPromise, timeoutPromise])
 
       console.log('handleMatchAyet: Match result:', result)
@@ -491,177 +502,181 @@ const RuhHaliAyetleri = () => {
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-     
-            {!hasSubscription && (
-              <TouchableOpacity
-              delayLongPress={()=>{return true}  }  
-                style={styles.backgroundPlayButton}
-                onPress={() => {
-                  navigation.navigate('RemoveAds')
-                }}
-                activeOpacity={0.8}
-              >
-                <MaterialCommunityIcons
-                  name="play"
-                  size={20}
-                  color="#FFFFFF"
-                  style={styles.backgroundPlayIcon}
-                />
-                <Text style={styles.backgroundPlayText}>Arka Planda Dinleme özelliğini Aktif et</Text>
-              </TouchableOpacity>
-            )}
+ 
+
+            {backgroundPlayControl == "false" && <View>
+
+
+              {!hasSubscription && (
+                <TouchableOpacity
+                  delayLongPress={() => { return true }}
+                  style={styles.backgroundPlayButton}
+                  onPress={() => {
+                    navigation.navigate('RemoveAds')
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons
+                    name="play"
+                    size={20}
+                    color="#FFFFFF"
+                    style={styles.backgroundPlayIcon}
+                  />
+                  <Text style={styles.backgroundPlayText}>Arka Planda Dinleme özelliğini Aktif et</Text>
+                </TouchableOpacity>
+              )}</View>}
 
             <View style={styles.card}>
-            <Text style={styles.cardTitle}>Ruh Halinizi Yazın</Text>
-            <Text style={styles.cardSubtitle}>
-              Ruh halinizi, isteklerinizi veya arzularınızı yazın. Size en uygun ayeti bulalım.
-            </Text>
-
-            <View style={styles.aiInfoContainer}>
-              <MaterialCommunityIcons name="robot" size={16} color="#4A148C" />
-              <Text style={styles.aiInfoText}>
-                Yapay zeka ile yazdıklarınıza göre ruh halinize en uygun ayeti otomatik olarak belirliyoruz.
+              <Text style={styles.cardTitle}>Ruh Halinizi Yazın</Text>
+              <Text style={styles.cardSubtitle}>
+                Ruh halinizi, isteklerinizi veya arzularınızı yazın. Size en uygun ayeti bulalım.
               </Text>
-            </View>
 
-            <TextInput
-              style={styles.textInput}
-              placeholder="Örn: Huzursuzum, uyuyamıyorum, içimde bir sıkıntı var..."
-              placeholderTextColor="#9E9E9E"
-              multiline
-              numberOfLines={4}
-              value={moodText}
-              onChangeText={setMoodText}
-              textAlignVertical="top"
-            />
+              <View style={styles.aiInfoContainer}>
+                <MaterialCommunityIcons name="robot" size={16} color="#4A148C" />
+                <Text style={styles.aiInfoText}>
+                  Yapay zeka ile yazdıklarınıza göre ruh halinize en uygun ayeti otomatik olarak belirliyoruz.
+                </Text>
+              </View>
 
-            <TouchableOpacity
-              delayPressOut={()=>{return true}  }  
-              style={[styles.matchButton, loading && styles.matchButtonDisabled]}
-              onPress={handleMatchAyet}
-              disabled={loading}
-            
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <>
-                  <MaterialCommunityIcons name="headphones" size={20} color="#FFFFFF" />
-                  <Text style={styles.matchButtonText}>Uygun Ayeti Dinle</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Örn: Huzursuzum, uyuyamıyorum, içimde bir sıkıntı var..."
+                placeholderTextColor="#9E9E9E"
+                multiline
+                numberOfLines={4}
+                value={moodText}
+                onChangeText={setMoodText}
+                textAlignVertical="top"
+              />
+
+              <TouchableOpacity
+                delayPressOut={() => { return true }}
+                style={[styles.matchButton, loading && styles.matchButtonDisabled]}
+                onPress={handleMatchAyet}
+                disabled={loading}
+
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="headphones" size={20} color="#FFFFFF" />
+                    <Text style={styles.matchButtonText}>Uygun Ayeti Dinle</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
 
             {matchedAyet && (
               <View style={styles.playerCard}>
-              <View style={styles.playerHeader}>
-                <Text style={styles.playerTitle}>{matchedAyet.title || 'Ayet'}</Text>
-                {matchedAyet.description && (
-                  <Text style={styles.playerDescription}>{matchedAyet.description}</Text>
-                )}
-              </View>
+                <View style={styles.playerHeader}>
+                  <Text style={styles.playerTitle}>{matchedAyet.title || 'Ayet'}</Text>
+                  {matchedAyet.description && (
+                    <Text style={styles.playerDescription}>{matchedAyet.description}</Text>
+                  )}
+                </View>
 
-              {(() => {
-                // iOS'ta periyodik kontrol sayesinde currentPlaybackState güncel olmalı
-                const isPlaying = currentPlaybackState === State.Playing || playbackState === State.Playing
-                const isBuffering = currentPlaybackState === State.Loading || currentPlaybackState === State.Buffering || playbackState === State.Loading || playbackState === State.Buffering
-                const shownPosition = isSeeking ? seekValue : progress.position
-                const shownDuration = progress.duration
-                const sliderMax = shownDuration > 0 ? shownDuration : Math.max(shownPosition, 1)
+                {(() => {
+                  // iOS'ta periyodik kontrol sayesinde currentPlaybackState güncel olmalı
+                  const isPlaying = currentPlaybackState === State.Playing || playbackState === State.Playing
+                  const isBuffering = currentPlaybackState === State.Loading || currentPlaybackState === State.Buffering || playbackState === State.Loading || playbackState === State.Buffering
+                  const shownPosition = isSeeking ? seekValue : progress.position
+                  const shownDuration = progress.duration
+                  const sliderMax = shownDuration > 0 ? shownDuration : Math.max(shownPosition, 1)
 
-                return (
-                  <>
-                    <View style={styles.controlsRow}>
-                      <TouchableOpacity  delayLongPress={()=>{return true}  }  
-                        onPress={() => handleSeekBy(-10)}
-                        style={[styles.controlButton, (isPreparing || isBuffering) && styles.controlDisabled]}
-                        disabled={isPreparing || isBuffering}
-                      >
-                        <MaterialCommunityIcons
-                          name="rewind-10"
-                          size={22}
-                          color={isPreparing || isBuffering ? '#B0BEC5' : '#4A148C'}
-                        />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity  
-                       delayPressOut={()=>{return true}  }  
-                        onPress={handlePlayPress}
-                        style={[styles.playButton, isPlaying && styles.playButtonActive]}
-                        disabled={isPreparing}
-                        delayLongPress={()=>{return true}  }  
-                      >
-                        {isPreparing ? (
-                          <ActivityIndicator color="#FFFFFF" size="small" />
-                        ) : (
+                  return (
+                    <>
+                      <View style={styles.controlsRow}>
+                        <TouchableOpacity delayLongPress={() => { return true }}
+                          onPress={() => handleSeekBy(-10)}
+                          style={[styles.controlButton, (isPreparing || isBuffering) && styles.controlDisabled]}
+                          disabled={isPreparing || isBuffering}
+                        >
                           <MaterialCommunityIcons
-                            name={isPlaying ? 'pause' : 'play'}
-                            size={26}
-                            color={isPlaying ? '#FFFFFF' : '#4A148C'}
+                            name="rewind-10"
+                            size={22}
+                            color={isPreparing || isBuffering ? '#B0BEC5' : '#4A148C'}
                           />
-                        )}
-                      </TouchableOpacity>
+                        </TouchableOpacity>
 
-                      <TouchableOpacity  delayLongPress={()=>{return true}  }  
-                        onPress={handleStopPress}
-                        style={[styles.controlButton, isPreparing && styles.controlDisabled]}
-                        disabled={isPreparing}
-                      >
-                        <MaterialCommunityIcons
-                          name="stop"
-                          size={22}
-                          color={isPreparing ? '#B0BEC5' : '#4A148C'}
+                        <TouchableOpacity
+                          delayPressOut={() => { return true }}
+                          onPress={handlePlayPress}
+                          style={[styles.playButton, isPlaying && styles.playButtonActive]}
+                          disabled={isPreparing}
+                          delayLongPress={() => { return true }}
+                        >
+                          {isPreparing ? (
+                            <ActivityIndicator color="#FFFFFF" size="small" />
+                          ) : (
+                            <MaterialCommunityIcons
+                              name={isPlaying ? 'pause' : 'play'}
+                              size={26}
+                              color={isPlaying ? '#FFFFFF' : '#4A148C'}
+                            />
+                          )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity delayLongPress={() => { return true }}
+                          onPress={handleStopPress}
+                          style={[styles.controlButton, isPreparing && styles.controlDisabled]}
+                          disabled={isPreparing}
+                        >
+                          <MaterialCommunityIcons
+                            name="stop"
+                            size={22}
+                            color={isPreparing ? '#B0BEC5' : '#4A148C'}
+                          />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity delayLongPress={() => { return true }}
+                          onPress={() => handleSeekBy(10)}
+                          style={[styles.controlButton, (isPreparing || isBuffering) && styles.controlDisabled]}
+                          disabled={isPreparing || isBuffering}
+                        >
+                          <MaterialCommunityIcons
+                            name="fast-forward-10"
+                            size={22}
+                            color={isPreparing || isBuffering ? '#B0BEC5' : '#4A148C'}
+                          />
+                        </TouchableOpacity>
+                      </View>
+
+                      <View style={styles.sliderRow}>
+                        <Text style={styles.timeText}>{formatTime(shownPosition)}</Text>
+                        <Slider
+                          style={styles.slider}
+                          minimumValue={0}
+                          maximumValue={sliderMax}
+                          value={shownPosition}
+                          onSlidingStart={handleSeekStart}
+                          onValueChange={handleSeekChange}
+                          onSlidingComplete={handleSeekComplete}
+                          minimumTrackTintColor="#4A148C"
+                          maximumTrackTintColor="#D1C4E9"
+                          thumbTintColor="#4A148C"
+                          disabled={isPreparing}
                         />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity  delayLongPress={()=>{return true}  }  
-                        onPress={() => handleSeekBy(10)}
-                        style={[styles.controlButton, (isPreparing || isBuffering) && styles.controlDisabled]}
-                        disabled={isPreparing || isBuffering}
-                      >
-                        <MaterialCommunityIcons
-                          name="fast-forward-10"
-                          size={22}
-                          color={isPreparing || isBuffering ? '#B0BEC5' : '#4A148C'}
-                        />
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.sliderRow}>
-                      <Text style={styles.timeText}>{formatTime(shownPosition)}</Text>
-                      <Slider
-                        style={styles.slider}
-                        minimumValue={0}
-                        maximumValue={sliderMax}
-                        value={shownPosition}
-                        onSlidingStart={handleSeekStart}
-                        onValueChange={handleSeekChange}
-                        onSlidingComplete={handleSeekComplete}
-                        minimumTrackTintColor="#4A148C"
-                        maximumTrackTintColor="#D1C4E9"
-                        thumbTintColor="#4A148C"
-                        disabled={isPreparing}
-                      />
-                      <Text style={styles.timeText}>{formatTime(shownDuration)}</Text>
-                    </View>
-                  </>
-                )
-              })()}
+                        <Text style={styles.timeText}>{formatTime(shownDuration)}</Text>
+                      </View>
+                    </>
+                  )
+                })()}
 
                 {playerError && <Text style={styles.errorInline}>{playerError}</Text>}
               </View>
             )}
-                  
+
           </ScrollView>
         </KeyboardAvoidingView>
       </LinearGradient>
       <AdmobViewBanner
-                  iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
-                  androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
-                  bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
-                  style={{ alignItems: 'center', paddingVertical: 4 }}
-                />
+        iosAdUnitId="ca-app-pub-8795169628743262/9326945854"   // iOS için unit ID
+        androidAdUnitId="ca-app-pub-8795169628743262/4266190864" // Android için gerçek unit ID
+        bannerSize="SMART_BANNER" // İstersen 'BANNER', 'LARGE_BANNER' vs. de verebilirsin
+        style={{ alignItems: 'center', paddingVertical: 4 }}
+      />
       <AnalysisModal visible={analysisVisible} desireText={moodText} />
     </>
   )
