@@ -1,7 +1,7 @@
 import React from 'react';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useEffect } from 'react';
-import { Dimensions, Image, Platform, TouchableOpacity } from 'react-native';
+import { Dimensions, Image, Platform, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { View, Text, ScrollView } from 'react-native';
 import Background from '../../components/Background';
 import apiConstant from '../../helpers/dataApi/apiConstant';
@@ -12,6 +12,7 @@ import Loading from '../../components/Loading';
 import PowerProgress from '../../components/PowerProgress';
 import { DeviceLanguage, LangApp } from '../../components/Language';
 import Purchases from 'react-native-purchases';
+import { RewardedAd, AdEventType, RewardedAdEventType } from 'react-native-google-mobile-ads';
 function Detail(props) {
 
     const [dua, setDua] = useState([])
@@ -21,6 +22,11 @@ function Detail(props) {
     const [loadinData, setLoadinData] = useState(false)
     const [unlockedDua, setUnlockedDua] = useState([])
     const [packages, setPackages] = useState([]);
+    const [rewardModalVisible, setRewardModalVisible] = useState(false)
+    const [selectedItem, setSelectedItem] = useState(null)
+    const [adLoading, setAdLoading] = useState(false)
+    const [hasSubscription, setHasSubscription] = useState(false)
+    const rewardedAdRef = useRef(null)
 
     const APIKeys = {
         apple: "appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX",
@@ -33,6 +39,55 @@ function Detail(props) {
     } else {
         props.navigation.setOptions({ title: props.route.params.item.name })
     }
+
+    // Ödüllü reklam yükleme
+    const loadRewardedAd = useCallback(() => {
+        const iosAdUnitId = 'ca-app-pub-8795169628743262/1276761521'
+        const androidAdUnitId = 'ca-app-pub-8795169628743262/9466258645'
+        const adUnitId = Platform.OS === 'ios' ? iosAdUnitId : androidAdUnitId
+
+        const rewarded = RewardedAd.createForAdRequest(adUnitId, {
+            requestNonPersonalizedAdsOnly: true,
+        })
+
+        const subscriptions = [
+            rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
+                // Reklam yüklendi
+                setAdLoading(false)
+            }),
+            rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, (reward) => {
+                // Ödül kazanıldı - Steps sayfasına geç
+                setSelectedItem((currentItem) => {
+                    if (currentItem) {
+                        setRewardModalVisible(false)
+                        props.navigation.navigate("Steps", { item: currentItem })
+                    }
+                    return null
+                })
+            }),
+            rewarded.addAdEventListener(AdEventType.ERROR, (error) => {
+                console.warn('RewardedAd error', error)
+                setAdLoading(false)
+            }),
+            rewarded.addAdEventListener(AdEventType.CLOSED, () => {
+                // Reklam kapandı
+                setAdLoading(false)
+            }),
+        ]
+
+        rewarded.load()
+        rewardedAdRef.current = rewarded
+
+        return () => {
+            subscriptions.forEach((unsubscribe) => {
+                try {
+                    unsubscribe?.()
+                } catch (error) {
+                    console.warn('RewardedAd cleanup error', error)
+                }
+            })
+        }
+    }, [props.navigation])
 
     useEffect(() => {
         getCategory(page);
@@ -57,13 +112,26 @@ function Detail(props) {
 
             //   rps.data.coin 
             Purchases.setDebugLogsEnabled(true)
+
+            // Abonelik kontrolü
+            try {
+                const customerInfo = await Purchases.getCustomerInfo()
+                const isActive = customerInfo.entitlements.active['naim1016'] !== undefined
+                setHasSubscription(isActive)
+            } catch (error) {
+                console.warn('Subscription check error in Detail', error)
+                setHasSubscription(false)
+            }
         };
 
 
         setup()
             .catch("EEEEEER", console.log);
 
-    }, [props])
+        // Ödüllü reklamı yükle
+        const cleanup = loadRewardedAd()
+        return cleanup
+    }, [props, loadRewardedAd])
 
     const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
         const paddingToBottom = 20;
@@ -99,6 +167,55 @@ function Detail(props) {
         setDua(rd)
         setRefresh(new Date())
         setLoadinData(false)
+    }
+
+    const handleDuaPress = (item) => {
+        setSelectedItem(item)
+        // Abone ise direkt Steps sayfasına git
+        if (hasSubscription || globalThis.__IS_SUBSCRIBED) {
+            props.navigation.navigate("Steps", { item })
+            return
+        }
+        // Abone değilse modal aç
+        setRewardModalVisible(true)
+        // Reklam yüklüyse hazır, değilse yükle
+        if (!rewardedAdRef.current) {
+            loadRewardedAd()
+        }
+    }
+
+    const handleWatchAd = async () => {
+        // Abone ise reklam göstermeden direkt Steps sayfasına git
+        if (hasSubscription || globalThis.__IS_SUBSCRIBED) {
+            if (selectedItem) {
+                setRewardModalVisible(false)
+                setSelectedItem(null)
+                props.navigation.navigate("Steps", { item: selectedItem })
+            }
+            return
+        }
+
+        setAdLoading(true)
+        
+        if (!rewardedAdRef.current) {
+            loadRewardedAd()
+            return
+        }
+
+        try {
+            await rewardedAdRef.current.show()
+        } catch (error) {
+            console.warn('RewardedAd show error', error)
+            setAdLoading(false)
+            // Reklam yüklenmemiş, yükle
+            loadRewardedAd()
+        }
+    }
+
+    const handleCancel = () => {
+        setRewardModalVisible(false)
+        setSelectedItem(null)
+        setAdLoading(false)
     }
 
     return (
@@ -141,7 +258,7 @@ function Detail(props) {
                         elevation: 12,
                     }} 
                     delayLongPress={()=>{return true}  }  
-                    onPress={() => { props.navigation.navigate("Steps", { item }) }}>
+                    onPress={() => { handleDuaPress(item) }}>
                         <View style={{ flex: 3 }}>
                             <Image style={{ resizeMode: "contain", width: "100%", height: "100%" }} source={{ uri: apiConstant.IMAGEBASEURL + "/" + item.imageUrl }}></Image>
 
@@ -243,8 +360,127 @@ function Detail(props) {
             {loadinData && <View style={{ paddingBottom: 25, paddingTop: 15, backgroundColor: "white", width: Dimensions.get("screen").width, bottom: 1, position: "absolute", flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
                 <Loading></Loading>
             </View>}
+
+            {/* Ödüllü Reklam Modal */}
+            <Modal
+                visible={rewardModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={handleCancel}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={handleCancel}
+                            delayLongPress={()=>{return true}}
+                        >
+                            <MaterialCommunityIcons name="close" size={24} color="#F44336" />
+                        </TouchableOpacity>
+                        <View style={styles.modalHeader}>
+                            <MaterialCommunityIcons name="magnify" size={32} color="#4CAF50" />
+                            <Text style={styles.modalTitle}>İçeriği Görmek İzni</Text>
+                        </View>
+                        <Text style={styles.modalDescription}>
+                            İçeriğe erişmek için reklam görüntüle
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.watchButton]}
+                                onPress={handleWatchAd}
+                                disabled={adLoading}
+                                delayLongPress={()=>{return true}}
+                            >
+                                {adLoading ? (
+                                    <Loading width={20} />
+                                ) : (
+                                    <Text style={styles.watchButtonText}>Dua Detayını Gör</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </Background>
     );
 }
+
+const styles = StyleSheet.create({
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    modalContent: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 24,
+        width: '90%',
+        maxWidth: 400,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        position: 'relative',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        zIndex: 10,
+        padding: 6,
+        borderRadius: 40,
+        borderWidth: 1.5,
+        borderColor: '#F44336',
+        backgroundColor: 'transparent',
+    },
+    modalHeader: {
+        alignItems: 'center',
+        marginBottom: 16,
+        marginTop: 8,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 12,
+        textAlign: 'center',
+    },
+    modalDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'center',
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    watchButton: {
+        backgroundColor: '#4CAF50',
+    },
+    watchButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+})
 
 export default Detail;

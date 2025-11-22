@@ -349,7 +349,7 @@ export default function Index({ startBase }) {
   const store = createStore(userReduccer);
 
   // Reklam gösterilmeyecek sayfalar
-  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile','HomeStack','Steps',"OzelAlanim","Home"]
+  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile','HomeStack','Steps','Detail','CategoryDetail',"OzelAlanim","Home","RemoveAds"]
 
   const handleNavigationStateChange = (state) => {
     if (!state) return
