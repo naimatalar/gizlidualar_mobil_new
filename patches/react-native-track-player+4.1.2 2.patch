@@ -1,0 +1,24 @@
+diff --git a/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt b/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt
+index 9c62cd5..d99635b 100644
+--- a/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt
++++ b/android/src/main/java/com/doublesymmetry/trackplayer/module/MusicModule.kt
+@@
+-        if (index >= 0 && index < musicService.tracks.size) {
+-            callback.resolve(Arguments.fromBundle(musicService.tracks[index].originalItem))
++        if (index >= 0 && index < musicService.tracks.size) {
++            val original = musicService.tracks[index].originalItem
++            callback.resolve(Arguments.fromBundle(original ?: Bundle()))
+@@
+-        callback.resolve(
+-            if (musicService.tracks.isEmpty()) null
+-            else Arguments.fromBundle(
+-                musicService.tracks[musicService.getCurrentTrackIndex()].originalItem
+-            )
+-        )
++        callback.resolve(
++            if (musicService.tracks.isEmpty()) null
++            else Arguments.fromBundle(
++                musicService.tracks[musicService.getCurrentTrackIndex()].originalItem ?: Bundle()
++            )
++        )
+

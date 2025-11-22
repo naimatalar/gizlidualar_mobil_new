@@ -386,7 +386,7 @@ export default function Index({ startBase }) {
     }, 500) // Kısa bir gecikme ile daha doğal görünsün
   }
 
-  return (
+  return ( 
     <Provider store={store}>
 
       <NavigationContainer 

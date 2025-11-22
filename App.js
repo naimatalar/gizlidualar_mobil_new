@@ -29,7 +29,7 @@ const AD_OVERLAY_STORAGE_KEY = 'ad_overlay_next_allowed_at'
 const wrapPressabilityConfig = (config) => {
   if (!config || typeof config.onPress !== 'function') {
     return config
-  }
+  } 
   if (config.onPress.__adOverlayWrapped) {
     return config
   }  
