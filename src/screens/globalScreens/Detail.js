@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useRef, useCallback } from 'react';
 import { useEffect } from 'react';
-import { Dimensions, Image, Platform, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { Dimensions, Image, Platform, TouchableOpacity, Modal, StyleSheet, InteractionManager } from 'react-native';
 import { View, Text, ScrollView } from 'react-native';
 import Background from '../../components/Background';
 import apiConstant from '../../helpers/dataApi/apiConstant';
@@ -26,7 +26,12 @@ function Detail(props) {
     const [selectedItem, setSelectedItem] = useState(null)
     const [adLoading, setAdLoading] = useState(false)
     const [hasSubscription, setHasSubscription] = useState(false)
+    const [isAdLoaded, setIsAdLoaded] = useState(false)
+    const [isAdShowing, setIsAdShowing] = useState(false) // iOS'ta reklam gösterilirken custom buton için
     const rewardedAdRef = useRef(null)
+    const isAdLoadedRef = useRef(false)
+    const selectedItemRef = useRef(null)
+    const rewardEarnedRef = useRef(false) // iOS'ta EARNED_REWARD event'inin tetiklendiğini takip et
 
     const APIKeys = {
         apple: "appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX",
@@ -46,6 +51,8 @@ function Detail(props) {
         const androidAdUnitId = 'ca-app-pub-8795169628743262/9466258645'
         const adUnitId = Platform.OS === 'ios' ? iosAdUnitId : androidAdUnitId
 
+        console.log(`[RewardedAd] Loading ad for ${Platform.OS}, AdUnitId: ${adUnitId}`)
+
         const rewarded = RewardedAd.createForAdRequest(adUnitId, {
             requestNonPersonalizedAdsOnly: true,
         })
@@ -53,28 +60,160 @@ function Detail(props) {
         const subscriptions = [
             rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
                 // Reklam yüklendi
+                console.log(`[RewardedAd] Ad loaded successfully for ${Platform.OS}`)
+                setIsAdLoaded(true)
+                isAdLoadedRef.current = true
                 setAdLoading(false)
             }),
+            rewarded.addAdEventListener(AdEventType.OPENED, () => {
+                // Reklam açıldı - iOS'ta custom buton göster
+                console.log(`[RewardedAd] Ad opened for ${Platform.OS}`)
+                if (Platform.OS === 'ios') {
+                    setIsAdShowing(true)
+                }
+            }),
             rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, (reward) => {
-                // Ödül kazanıldı - Steps sayfasına geç
-                setSelectedItem((currentItem) => {
-                    if (currentItem) {
-                        setRewardModalVisible(false)
-                        props.navigation.navigate("Steps", { item: currentItem })
-                    }
-                    return null
-                })
+                // Ödül kazanıldı
+                console.log(`[RewardedAd] Reward earned:`, reward)
+                console.log(`[RewardedAd] Platform: ${Platform.OS}`)
+                
+                // iOS'ta EARNED_REWARD event'inde hiçbir şey yapma
+                // iOS'ta kullanıcı kapat butonuna basınca CLOSED event'inde navigation yapılacak
+                if (Platform.OS === 'ios') {
+                    console.log(`[RewardedAd] iOS: EARNED_REWARD event - no action, waiting for CLOSED event`)
+                    // Sadece flag'i set et, navigation yapma
+                    rewardEarnedRef.current = true
+                    return
+                }
+                
+                // Android'de: Normal akış - Steps sayfasına geç
+                console.log(`[RewardedAd] Android: Navigating to Steps with item`)
+                
+                // Ref'ten item'ı al (closure sorununu önlemek için)
+                const currentItem = selectedItemRef.current
+                if (currentItem) {
+                    console.log(`[RewardedAd] Android: Closing modal and preparing navigation`)
+                    
+                    // State'leri güncelle
+                    setRewardModalVisible(false)
+                    setAdLoading(false)
+                    setIsAdLoaded(false)
+                    isAdLoadedRef.current = false
+                    setSelectedItem(null)
+                    
+                    // Android'de: Kullanıcı reklamı kapattığı için biraz bekle
+                    setTimeout(() => {
+                        console.log(`[RewardedAd] Android: Executing navigation`)
+                        try {
+                            props.navigation.navigate("Steps", { item: currentItem })
+                            selectedItemRef.current = null
+                            console.log(`[RewardedAd] Android: Navigation completed successfully`)
+                        } catch (navError) {
+                            console.error(`[RewardedAd] Android: Navigation error:`, navError)
+                        }
+                    }, 300) // Android'de 300ms - kullanıcı etkileşimi için
+                } else {
+                    console.warn(`[RewardedAd] Android: No selected item found`)
+                    setRewardModalVisible(false)
+                    setAdLoading(false)
+                }
             }),
             rewarded.addAdEventListener(AdEventType.ERROR, (error) => {
-                console.warn('RewardedAd error', error)
+                console.warn(`[RewardedAd] Error for ${Platform.OS}:`, error)
+                console.warn(`[RewardedAd] Error code:`, error.code)
+                console.warn(`[RewardedAd] Error message:`, error.message)
+                setIsAdLoaded(false)
+                isAdLoadedRef.current = false
                 setAdLoading(false)
             }),
             rewarded.addAdEventListener(AdEventType.CLOSED, () => {
                 // Reklam kapandı
-                setAdLoading(false)
+                console.log(`[RewardedAd] Ad closed for ${Platform.OS}`)
+                console.log(`[RewardedAd] rewardEarnedRef.current: ${rewardEarnedRef.current}`)
+                
+                // iOS ve Android için farklı yaklaşımlar
+                if (Platform.OS === 'ios') {
+                    // iOS'ta: EARNED_REWARD event'i tetiklendiyse (kullanıcı kapat butonuna bastı)
+                    // Modal'ı kapat ve Steps sayfasına git
+                    if (rewardEarnedRef.current) {
+                        console.log(`[RewardedAd] iOS: EARNED_REWARD was triggered, user closed ad - navigating to Steps`)
+                        
+                        // Ref'ten item'ı al
+                        const currentItem = selectedItemRef.current
+                        if (currentItem) {
+                            // Modal'ı kapat
+                            setRewardModalVisible(false)
+                            setAdLoading(false)
+                            setIsAdLoaded(false)
+                            isAdLoadedRef.current = false
+                            setSelectedItem(null)
+                            
+                            // iOS'ta: Modal'ın tamamen kapanması için kısa bekleme
+                            setTimeout(() => {
+                                console.log(`[RewardedAd] iOS: Executing navigation after ad close`)
+                                try {
+                                    // Modal'ın kesinlikle kapalı olduğundan emin ol
+                                    setRewardModalVisible(false)
+                                    
+                                    // Navigation yap
+                                    props.navigation.navigate("Steps", { item: currentItem })
+                                    
+                                    // Ref'leri temizle
+                                    selectedItemRef.current = null
+                                    
+                                    // Flag'i sıfırla
+                                    rewardEarnedRef.current = false
+                                    
+                                    console.log(`[RewardedAd] iOS: Navigation completed successfully`)
+                                } catch (navError) {
+                                    console.error(`[RewardedAd] iOS: Navigation error:`, navError)
+                                    // Hata durumunda state'leri temizle
+                                    setRewardModalVisible(false)
+                                    setAdLoading(false)
+                                    rewardEarnedRef.current = false
+                                }
+                                
+                                // Yeni reklam yükle
+                                setTimeout(() => {
+                                    setIsAdLoaded(false)
+                                    isAdLoadedRef.current = false
+                                    loadRewardedAd()
+                                }, 500)
+                            }, 200) // iOS'ta 200ms - modal unmount için
+                        } else {
+                            console.warn(`[RewardedAd] iOS: No selected item found in CLOSED event`)
+                            setRewardModalVisible(false)
+                            setAdLoading(false)
+                            rewardEarnedRef.current = false
+                        }
+                    } else {
+                        // iOS'ta EARNED_REWARD tetiklenmediyse (reklam hata verdi veya kullanıcı kapattı)
+                        console.log(`[RewardedAd] iOS: EARNED_REWARD not triggered, closing modal normally`)
+                        setRewardModalVisible(false)
+                        setAdLoading(false)
+                        setSelectedItem(null)
+                        selectedItemRef.current = null
+                        
+                        setTimeout(() => {
+                            setIsAdLoaded(false)
+                            isAdLoadedRef.current = false
+                            loadRewardedAd()
+                        }, 500)
+                    }
+                } else {
+                    // Android'de: Normal akış - kullanıcı reklamı kapattı
+                    console.log(`[RewardedAd] Android: Normal close flow`)
+                    setIsAdLoaded(false)
+                    isAdLoadedRef.current = false
+                    setAdLoading(false)
+                    // Yeni reklam yükle
+                    loadRewardedAd()
+                }
             }),
         ]
 
+        setIsAdLoaded(false)
+        isAdLoadedRef.current = false
         rewarded.load()
         rewardedAdRef.current = rewarded
 
@@ -171,6 +310,7 @@ function Detail(props) {
 
     const handleDuaPress = (item) => {
         setSelectedItem(item)
+        selectedItemRef.current = item
         // Abone ise direkt Steps sayfasına git
         if (hasSubscription || globalThis.__IS_SUBSCRIBED) {
             props.navigation.navigate("Steps", { item })
@@ -195,27 +335,109 @@ function Detail(props) {
             return
         }
 
+        console.log(`[RewardedAd] handleWatchAd called for ${Platform.OS}`)
+        console.log(`[RewardedAd] isAdLoaded: ${isAdLoadedRef.current}`)
+        console.log(`[RewardedAd] rewardedAdRef.current:`, rewardedAdRef.current ? 'exists' : 'null')
+        
         setAdLoading(true)
         
-        if (!rewardedAdRef.current) {
+        // Reklam yüklenmemişse yükle ve bekle
+        if (!rewardedAdRef.current || !isAdLoadedRef.current) {
+            console.log(`[RewardedAd] Ad not loaded, loading new ad...`)
             loadRewardedAd()
+            
+            // iOS'ta reklam yüklenene kadar bekle (max 5 saniye)
+            let waitCount = 0
+            const maxWait = 10 // 5 saniye (10 * 500ms)
+            
+            const checkInterval = setInterval(() => {
+                waitCount++
+                console.log(`[RewardedAd] Waiting for ad... (${waitCount}/${maxWait})`)
+                
+                if (isAdLoadedRef.current && rewardedAdRef.current) {
+                    clearInterval(checkInterval)
+                    console.log(`[RewardedAd] Ad loaded, showing...`)
+                    // Reklam yüklendi, göster
+                    try {
+                        const showPromise = rewardedAdRef.current.show()
+                        if (showPromise && typeof showPromise.then === 'function') {
+                            showPromise
+                                .then(() => {
+                                    console.log(`[RewardedAd] Ad show called successfully for ${Platform.OS}`)
+                                })
+                                .catch((error) => {
+                                    console.warn(`[RewardedAd] Show error for ${Platform.OS}:`, error)
+                                    setAdLoading(false)
+                                    setIsAdLoaded(false)
+                                    isAdLoadedRef.current = false
+                                    alert('Reklam gösterilemedi. Lütfen tekrar deneyin.')
+                                })
+                        } else {
+                            console.warn(`[RewardedAd] show() did not return a promise`)
+                            setAdLoading(false)
+                        }
+                    } catch (error) {
+                        console.error(`[RewardedAd] Error calling show() for ${Platform.OS}:`, error)
+                        setAdLoading(false)
+                        setIsAdLoaded(false)
+                        isAdLoadedRef.current = false
+                        alert('Reklam gösterilemedi. Lütfen tekrar deneyin.')
+                    }
+                } else if (waitCount >= maxWait) {
+                    clearInterval(checkInterval)
+                    console.warn(`[RewardedAd] Ad loading timeout for ${Platform.OS}`)
+                    setAdLoading(false)
+                    alert('Dua yüklenemedi tekrar deneyin.')
+                }
+            }, 500)
             return
         }
 
+        // Reklam yüklü, direkt göster
         try {
-            await rewardedAdRef.current.show()
+            console.log(`[RewardedAd] Attempting to show ad for ${Platform.OS}`)
+            try {
+                if (!rewardedAdRef.current) {
+                    throw new Error('Rewarded ad is null')
+                }
+                if (!isAdLoadedRef.current) {
+                    throw new Error('Rewarded ad is not loaded')
+                }
+                const showPromise = rewardedAdRef.current.show()
+                if (showPromise && typeof showPromise.then === 'function') {
+                    await showPromise
+                } else {
+                    console.warn(`[RewardedAd] show() did not return a promise`)
+                }
+            } catch (error) {
+                console.error(`[RewardedAd] Error calling show() for ${Platform.OS}:`, error)
+                setAdLoading(false)
+                setIsAdLoaded(false)
+                isAdLoadedRef.current = false
+                throw error
+            }
+            console.log(`[RewardedAd] Ad show called successfully for ${Platform.OS}`)
         } catch (error) {
-            console.warn('RewardedAd show error', error)
+            console.warn(`[RewardedAd] Show error for ${Platform.OS}:`, error)
+            console.warn(`[RewardedAd] Error details:`, JSON.stringify(error))
             setAdLoading(false)
+            setIsAdLoaded(false)
+            isAdLoadedRef.current = false
             // Reklam yüklenmemiş, yükle
             loadRewardedAd()
+            // Hata mesajı göster
+            alert('Reklam gösterilemedi. Lütfen tekrar deneyin.')
         }
     }
 
     const handleCancel = () => {
+        console.log(`[RewardedAd] handleCancel called`)
         setRewardModalVisible(false)
         setSelectedItem(null)
+        selectedItemRef.current = null
         setAdLoading(false)
+        setIsAdLoaded(false)
+        isAdLoadedRef.current = false
     }
 
     return (
@@ -362,11 +584,14 @@ function Detail(props) {
             </View>}
 
             {/* Ödüllü Reklam Modal */}
+            {rewardModalVisible && (
             <Modal
                 visible={rewardModalVisible}
                 transparent
                 animationType="fade"
                 onRequestClose={handleCancel}
+                presentationStyle={Platform.OS === 'ios' ? 'overFullScreen' : undefined}
+                hardwareAccelerated={Platform.OS === 'android'}
             >
                 <View style={styles.modalBackdrop}>
                     <View style={styles.modalContent}>
@@ -401,6 +626,10 @@ function Detail(props) {
                     </View>
                 </View>
             </Modal>
+            )}
+            
+    
+            
         </Background>
     );
 }
@@ -479,6 +708,40 @@ const styles = StyleSheet.create({
     watchButtonText: {
         color: '#FFFFFF',
         fontSize: 16,
+        fontWeight: 'bold',
+    },
+    adCloseOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
+        pointerEvents: 'box-none', // Sadece buton tıklanabilir, diğer alanlar geçirgen
+    },
+    customCloseButton: {
+        position: 'absolute',
+        top: Platform.OS === 'ios' ? 50 : 20, // iOS'ta safe area için
+        right: 15,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#000000',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        zIndex: 10000,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    customCloseButtonText: {
+        color: '#000000',
+        fontSize: 14,
         fontWeight: 'bold',
     },
 })

@@ -55,7 +55,7 @@ const getOrCreateDeviceId = async () => {
 
 // "expo-dev-client": "^2.4.11",
 
-const AD_OVERLAY_COOLDOWN_MS = 2 * 60 * 1000
+const AD_OVERLAY_COOLDOWN_MS = 5 * 60 * 1000
 const AD_OVERLAY_STORAGE_KEY = 'ad_overlay_next_allowed_at'
    
 const wrapPressabilityConfig = (config) => {
