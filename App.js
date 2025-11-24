@@ -2,7 +2,9 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import apiConstant from './src/helpers/dataApi/apiConstant'
 
-import { GetAxios } from './src/helpers/dataApi/crud'
+import { GetAxios, PostAxios } from './src/helpers/dataApi/crud'
+import Constants from 'expo-constants'
+import { registerAndSavePushToken } from './src/helpers/pushTokenHelper'
 import Index from './src/screens'
 import { Platform, View, Text, StyleSheet, AppState } from 'react-native'
 import Pressability from 'react-native/Libraries/Pressability/Pressability'
@@ -16,6 +18,7 @@ import Purchases from 'react-native-purchases'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import * as Device from 'expo-device'
 import * as Application from 'expo-application'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 const APIKeys = {
   apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
@@ -39,13 +42,9 @@ const getOrCreateDeviceId = async () => {
     if (!deviceId || deviceId.trim() === '') {
       deviceId = generateUUID()
       await AsyncStorage.setItem(STORAGE_KEY, deviceId)
-      console.log('[DeviceId] Yeni UUID oluşturuldu:', deviceId)
-    } else {
-      console.log('[DeviceId] Mevcut UUID kullanıldı:', deviceId)
     }
     return deviceId
   } catch (error) {
-    console.warn('[DeviceId] AsyncStorage hatası:', error)
     // Hata durumunda geçici UUID oluştur
     return generateUUID()
   }
@@ -74,7 +73,6 @@ const wrapPressabilityConfig = (config) => {
 
       //globalThis.__TRIGGER_AD_OVERLAY?.()
     } catch (error) {
-      console.warn('Ad overlay trigger error', error)
     }
     return originalOnPress(...args)
   }
@@ -132,8 +130,9 @@ useEffect(() => {
       playThroughEarpieceAndroid: false,
       interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
       interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-    }).catch((err) => console.warn('Audio mode error', err))
+    }).catch((err) => {})
   }, [])
+
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -144,12 +143,18 @@ useEffect(() => {
         vibrationPattern: [0],
         enableLights: false,
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-      }).catch((err) => console.warn('Playback channel error', err))
+      }).catch((err) => {})
 
-      Notifications.requestPermissionsAsync().catch((err) =>
-        console.warn('Notification permission request failed', err)
-      )
+      Notifications.requestPermissionsAsync().catch((err) => {})
     }
+
+    // Push token'ı kaydet (kullanıcı giriş yapmışsa)
+    // Kısa bir gecikme ile kontrol et, çünkü AsyncStorage henüz hazır olmayabilir
+    setTimeout(() => {
+      registerAndSavePushToken().catch(err => {
+        // Hata sessizce geç, çünkü kullanıcı henüz giriş yapmamış olabilir
+      })
+    }, 1000)
   }, [])
 
   useEffect(() => {
@@ -160,7 +165,7 @@ useEffect(() => {
         tagForUnderAgeOfConsent: false,
       })
       .then(() => mobileAds().initialize())
-      .catch((err) => console.warn('MobileAds init error', err))
+      .catch((err) => {})
   }, [])
 
   useEffect(() => {
@@ -175,26 +180,11 @@ useEffect(() => {
 
         const customerInfo = await Purchases.getCustomerInfo()
         
-        // Detaylı loglama
-        console.log('[Subscription Check] CustomerInfo:', JSON.stringify(customerInfo, null, 2))
-        console.log('[Subscription Check] Active entitlements keys:', Object.keys(customerInfo.entitlements.active || {}))
-        console.log('[Subscription Check] All entitlements keys:', Object.keys(customerInfo.entitlements.all || {}))
-        
         const reklamsizEntitlement = customerInfo.entitlements.active['naim1016']
         const isActive = reklamsizEntitlement !== undefined
         
-        console.log('[Subscription Check] naim1016 entitlement:', reklamsizEntitlement)
-        console.log('[Subscription Check] isActive:', isActive)
-        
         setHasSubscription(isActive)
-        
-        if (isActive) {
-          console.log('[Subscription Check] abonesin')
-        } else {
-          console.log('[Subscription Check] değilsin')
-        }
       } catch (error) {
-        console.warn('Subscription check error in App.js', error)
         setHasSubscription(false)
       }
     }
@@ -214,22 +204,73 @@ useEffect(() => {
  }, [hasSubscription])
 
   useEffect(() => {
+    // Uygulama kapalıyken gelen notification'a tıklandığında
     Notifications.getLastNotificationResponseAsync()
       .then((response) => {
         if (response?.notification) {
-          navigate('OzelAlanim')
+          const data = response.notification.request.content.data
+          handleNotificationNavigation(data)
         }
       })
       .catch((err) => console.warn('getLastNotificationResponseAsync error', err))
 
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener(() => {
-      navigate('OzelAlanim')
+    // Uygulama açıkken notification'a tıklandığında
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data
+      handleNotificationNavigation(data)
     })
 
     return () => {
       responseSubscription.remove()
     }
   }, [])
+
+  const navigateToTopicDetail = (topicId, entryId) => {
+    if (!topicId) {
+      console.warn('[Notification] topicId yok, default ekrana gidiliyor')
+      navigate('OzelAlanim')
+      return
+    }
+
+    const nestedParams = {
+      screen: 'TopicDetail',
+      params: {
+        topicId,
+        targetEntryId: entryId || null,
+      },
+    }
+
+    console.log(
+      '[Notification] TopicDetail yönlendirmesi',
+      JSON.stringify({ topicId, entryId })
+    )
+
+    navigate('TopicsStack', nestedParams)
+  }
+
+  // Notification'a tıklandığında yönlendirme yap
+  const handleNotificationNavigation = (data) => {
+    console.log("_________Notification data:", data);
+    if (!data) {
+      // Eski notification formatı veya data yoksa varsayılan sayfaya git
+      navigate('OzelAlanim')
+      return
+    }
+
+    const notificationType = data.type
+
+    // Entry veya beğeni notification'ları için TopicDetail'e git
+    if (
+      notificationType === 'entry_reply' ||
+      notificationType === 'entry_comment' ||
+      notificationType === 'entry_like'
+    ) {
+      navigateToTopicDetail(data.topicId, data.entryId)
+    } else {
+      // Diğer notification türleri için varsayılan sayfa
+      navigate('OzelAlanim')
+    }
+  }
 
   // Interstitial reklam yükleme ve yönetimi
   const loadInterstitial = useCallback(() => {
@@ -250,7 +291,6 @@ useEffect(() => {
         // Reklam yüklendi, hazır
       }),
       interstitial.addAdEventListener(AdEventType.ERROR, (error) => {
-        console.warn('AdMob Interstitial error', error)
       }),
       interstitial.addAdEventListener(AdEventType.CLOSED, async () => {
         // Reklam kapandı, cooldown'u şimdi set et (tam 5 dakika)
@@ -261,7 +301,6 @@ useEffect(() => {
             String(now + AD_OVERLAY_COOLDOWN_MS)
           )
         } catch (error) {
-          console.warn('Ad overlay cooldown set error', error)
         }
         // Yeni reklam yükle
         loadInterstitial()
@@ -276,7 +315,6 @@ useEffect(() => {
         try {
           unsubscribe?.()
         } catch (error) {
-          console.warn('Interstitial cleanup error', error)
         }
       })
     }
@@ -306,7 +344,6 @@ useEffect(() => {
         return
       }
     } catch (error) {
-      console.warn('Ad overlay cooldown check error', error)
       return
     }
 
@@ -315,7 +352,6 @@ useEffect(() => {
       await interstitialRef.current.show()
       // Reklam başarıyla gösterildi, cooldown'u reklam kapandığında set edeceğiz
     } catch (error) {
-      console.warn('Interstitial show error', error)
       // Reklam yüklenmemiş, yükle
       if (interstitialRef.current) {
         interstitialRef.current.load()
@@ -353,7 +389,6 @@ useEffect(() => {
     
     // Sadece bir kez çalıştır
     if (hasStartedRef.current) {
-      console.log('[App] start() zaten çalıştırıldı, atlanıyor')
       return
     }
     
@@ -361,7 +396,6 @@ useEffect(() => {
     try {
       start()
     } catch (error) {
-      console.error('[App] start() hatası:', error)
       hasStartedRef.current = false // Hata durumunda tekrar denemeye izin ver
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -401,18 +435,15 @@ var ds=0;
   
     // Eğer zaten bağlantı kuruluyorsa, tekrar başlatma
     if (isInitializingRef.current) {
-      console.log('[SignalR] Bağlantı zaten kuruluyor, iptal edildi')
       return
     }
 
     // Eğer bağlantı zaten varsa ve durumu uygunsa, tekrar bağlanma
     if (signalRConnectionRef.current) {
       const currentState = signalRConnectionRef.current.state
-      console.log('[SignalR] Mevcut bağlantı durumu:', currentState)
       
       // Zaten bağlıysa veya bağlanıyorsa, tekrar bağlanma
       if (currentState === 'Connected' || currentState === 'Connecting' || currentState === 'Reconnecting') {
-        console.log('[SignalR] Bağlantı zaten aktif, tekrar bağlanma iptal edildi')
         return
       }
       
@@ -420,9 +451,7 @@ var ds=0;
       if (currentState === 'Disconnected' || currentState === 'Disconnecting') {
         try {
           await signalRConnectionRef.current.stop()
-          console.log('[SignalR] Eski bağlantı kapatıldı')
         } catch (stopError) {
-          console.warn('[SignalR] Eski bağlantı kapatılırken hata:', stopError)
         }
         signalRConnectionRef.current = null
       }
@@ -435,15 +464,11 @@ var ds=0;
       const deviceId = await getOrCreateDeviceId()
 
       const platform = Platform.OS === 'ios' ? 'ios' : 'android'
-      console.log('[SignalR] Platform:', platform)
-      console.log('[SignalR] DeviceId son durum:', deviceId)
       
       // DeviceId ve Platform bilgisini query string ile gönder
       const hubUrl = deviceId 
         ? `${apiConstant.SignalRHubUrl}?deviceId=${encodeURIComponent(deviceId)}&platform=${platform}`
         : `${apiConstant.SignalRHubUrl}?platform=${platform}`
-      
-      console.log('[SignalR] Hub URL:', hubUrl)
 
       const connection = new HubConnectionBuilder()
         .withUrl(hubUrl)
@@ -460,7 +485,6 @@ var ds=0;
 
       // Bağlantı event'leri
       connection.onclose((error) => {
-        console.log('[SignalR] Connection closed', error)
         // Bağlantı kapandığında ref'i temizle
         if (signalRConnectionRef.current === connection) {
           signalRConnectionRef.current = null
@@ -469,21 +493,17 @@ var ds=0;
       })
 
       connection.onreconnecting((error) => {
-        console.log('[SignalR] Reconnecting', error)
       })
 
       connection.onreconnected((connectionId) => {
-        console.log('[SignalR] Reconnected', connectionId)
       })
 
       // Bağlantıyı başlat
       await connection.start()
-      console.log('[SignalR] Connected successfully')
       
       signalRConnectionRef.current = connection
       isInitializingRef.current = false
     } catch (error) {
-      console.warn('[SignalR] Connection error:', error)
       // Hata durumunda ref'i temizle
       signalRConnectionRef.current = null
       isInitializingRef.current = false
@@ -497,17 +517,14 @@ var ds=0;
         const currentState = signalRConnectionRef.current?.state
         // Sadece bağlantı yoksa veya Disconnected durumundaysa bağlan
         if (!signalRConnectionRef.current || currentState === 'Disconnected') {
-          console.log('[SignalR] AppState active, bağlantı başlatılıyor...')
           await initializeSignalR()
-        } else {
-          console.log('[SignalR] AppState active, mevcut bağlantı durumu:', currentState)
         }
       }
     })
 
     return () => {
       subscription?.remove()
-    }
+    } 
   }, [initializeSignalR])
 
   // Component unmount olduğunda bağlantıyı kapat
@@ -515,7 +532,6 @@ var ds=0;
     return () => {
       if (signalRConnectionRef.current) {
         signalRConnectionRef.current.stop().catch(err => {
-          console.warn('SignalR stop error:', err)
         })
       }
     }
@@ -523,23 +539,27 @@ var ds=0;
  
   if (refresh == true) {
     return (
-      <View
-        style={{
-          flexDirection: 'row',
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          position: 'relative',
-        }}
-      >
-        <Loading width={80} />
-      </View>
+      <SafeAreaProvider>
+        <View
+          style={{
+            flexDirection: 'row',
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+          }}
+        >
+          <Loading width={80} />
+        </View>
+      </SafeAreaProvider>
     )
   } else {
     return (
-      <View style={{ flex: 1, position: 'relative' }}>
-        <Index startBase={start} />
-      </View>
+      <SafeAreaProvider>
+        <View style={{ flex: 1, position: 'relative' }}>
+          <Index startBase={start} />
+        </View>
+      </SafeAreaProvider>
     )
   }
 }

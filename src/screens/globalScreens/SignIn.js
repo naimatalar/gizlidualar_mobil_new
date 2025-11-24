@@ -11,6 +11,7 @@ import * as IntentLauncher from 'expo-intent-launcher'
 import MaterialCommunityIcons
     from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LangApp } from '../../components/Language';
+import { registerAndSavePushToken } from '../../helpers/pushTokenHelper';
 function SignIn(props) {
     const [phoneNumber, setPhoneNumber] = useState('')
     const [tempCode, setTempCode] = useState('')
@@ -90,6 +91,12 @@ function SignIn(props) {
 
             await AsyncStorage.setItem("hlcapptokengDua", rps.data.token)
 
+            // Push token'ı kaydet (giriş yaptıktan sonra)
+            setTimeout(() => {
+                registerAndSavePushToken().catch(err => 
+                    console.warn('[SignIn] Push token kaydetme hatası:', err)
+                )
+            }, 500)
 
         } else {
             Alert.alert("Hata", "Giriş bilgileri hatalı.")

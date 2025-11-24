@@ -68,7 +68,6 @@ function Home(props) {
       </LinearGradient>
       <View style={{ width: "100%", backgroundColor: "orange", padding: 5 }}>
         <Text style={{ fontSize: 12, color: "black", fontWeight: "bold" }}>{LangApp("duaih")}</Text>
-
       </View>
       <ScrollView style={{ width: "100%", flexDirection: "column" }}>
         {cateory}

@@ -29,7 +29,12 @@ import RuhHaliAyetleri from './globalScreens/RuhHaliAyetleri';
 import PushNotificationScreen from './globalScreens/PushNotification';
 import BanaOzel from './BanaOzel';
 import OzelAlanim from './OzelAlanim';
+import TopicsList from './globalScreens/TopicsList';
+import TopicDetail from './globalScreens/TopicDetail';
+import CreateTopic from './globalScreens/CreateTopic';
+import CreateEntry from './globalScreens/CreateEntry';
 import { navigationRef, flushPendingNavigation } from '../navigation/navigationRef';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // import { getLocales } from 'expo-localization';
 
@@ -220,6 +225,40 @@ function OzelAlanimStackScreen() {
   )
 }
 
+const TopicsStack = createStackNavigator();
+function TopicsStackScreen() {
+  return (
+    <TopicsStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
+      <TopicsStack.Screen
+        name="TopicsList"
+        options={(e) => ({ 
+          headerRight: () => infoButton(e), 
+          title: DeviceLanguage === 'ar' ? 'المواضيع' : 'Topluluk' 
+        })}
+        component={TopicsList}
+      />
+      <TopicsStack.Screen
+        name="TopicDetail"
+        options={(e) => ({ 
+          headerRight: () => infoButton(e), 
+          title: DeviceLanguage === 'ar' ? 'تفاصيل الموضوع' : 'Konu Detayı' 
+        })}
+        component={TopicDetail}
+      />
+      <TopicsStack.Screen
+        name="CreateTopic"
+        options={{ title: DeviceLanguage === 'ar' ? 'موضوع جديد' : 'Yeni Konu' }}
+        component={CreateTopic}
+      />
+      <TopicsStack.Screen
+        name="CreateEntry"
+        options={{ title: DeviceLanguage === 'ar' ? 'كتابة جديدة' : 'Yeni Yazı' }}
+        component={CreateEntry}
+      />
+    </TopicsStack.Navigator>
+  )
+}
+
 
 
 
@@ -290,6 +329,7 @@ export default function Index({ startBase }) {
 
   const [coin, setCoin] = React.useState(0)
   const previousRouteName = React.useRef(null)
+  const insets = useSafeAreaInsets()
 
 
   let coinBadgeStyle = { marginTop: -18, marginLeft: -6, height: 30, paddingTop: 6, fontSize: 12, borderRadius: 15 }
@@ -349,7 +389,7 @@ export default function Index({ startBase }) {
   const store = createStore(userReduccer);
 
   // Reklam gösterilmeyecek sayfalar
-  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile','HomeStack','Steps','Detail','CategoryDetail',"OzelAlanim","Home","RemoveAds"]
+  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile','HomeStack','Steps','Detail','CategoryDetail',"OzelAlanim","Home","RemoveAds","TopicsStack","TopicsList","TopicDetail","CreateTopic","CreateEntry"]
 
   const handleNavigationStateChange = (state) => {
     if (!state) return
@@ -398,7 +438,16 @@ export default function Index({ startBase }) {
 
           initialRouteName="HomeStack"
           screenOptions={({ route }) => ({
-
+          tabBarStyle: {
+            backgroundColor: '#F5F5F5',
+            borderTopWidth: 1,
+            borderTopColor: '#E0E0E0',
+            height: (Platform.OS === 'ios' ? 85 : 60) + insets.bottom,
+            paddingBottom: (Platform.OS === 'ios' ? 25 : 8) + insets.bottom,
+            paddingTop: 8,
+          },
+            tabBarActiveTintColor: '#1976D2',
+            tabBarInactiveTintColor: '#757575',
             tabBarIcon: ({ focused, color, size }) => {
               let iconName;
               if (route.name === 'HomeStack') {
@@ -429,6 +478,8 @@ export default function Index({ startBase }) {
                   : 'pentagram';
               } else if (route.name === 'OzelAlanim') {
                 iconName = focused ? 'hands-pray' : 'hands-pray';
+              } else if (route.name === 'TopicsStack') {
+                iconName = focused ? 'message-text' : 'message-text-outline';
               }
 
               let sty = {}
@@ -523,6 +574,17 @@ export default function Index({ startBase }) {
                   incSize = 42
                 }
               }
+              if (route.name === 'TopicsStack') {
+                sty = { backgroundColor: "#C5E1A5", width: 48, height: 48, marginTop: 5, borderRadius: 50, justifyContent: "center", alignItems: "center" }
+                if (focused) {
+                  sty.marginTop = 1
+                  sty.borderWidth = 1
+                  sty.borderColor = "#558B2F"
+                  sty.width = 60
+                  sty.height = 60
+                  incSize = 42
+                }
+              }
 
 
 
@@ -542,7 +604,7 @@ export default function Index({ startBase }) {
 
                     name={iconName}
                     size={incSize}
-                    color={color}
+                    color={focused ? '#1976D2' : '#757575'}
                   />
                 </View>
 
@@ -563,6 +625,11 @@ export default function Index({ startBase }) {
           {/* <Tab.Screen options={{ tabBarLabel: "", title: "Dualar", headerShown: false }} name="BanaOzel" component={(c) => <BanOzelScreen setCoin={setCoin} {...c}></BanOzelScreen>} /> */}
 
           <Tab.Screen options={{ tabBarLabel: "", headerShown: false, title: LangApp("gd") }} name="HomeStack" component={(c) => <HomeStackScreen {...c} start={start} setCoin={setCoin}></HomeStackScreen>} />
+          <Tab.Screen 
+            options={{ tabBarLabel: "", headerShown: false, title: DeviceLanguage === 'ar' ? 'المنتدى' : 'Topluluk' }} 
+            name="TopicsStack" 
+            component={(c) => <TopicsStackScreen {...c}></TopicsStackScreen>} 
+          />
           {!isLogin && <Tab.Screen options={{ tabBarLabel: "", title: LangApp("uyeGiris") }} name="SignIn" component={() => <SginInStackStackScreen isLogin={isLogin} start={startBase}></SginInStackStackScreen>} />
           }
 
