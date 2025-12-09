@@ -12,6 +12,14 @@ export function navigate(name, params) {
   }
 }
 
+export function navigateReset(params) {
+  if (navigationRef.isReady()) {
+    navigationRef.reset(params);
+  } else {
+    pendingNavigation =  params;
+  }
+}
+
 export function flushPendingNavigation() {
   if (pendingNavigation) {
     const { name, params } = pendingNavigation;

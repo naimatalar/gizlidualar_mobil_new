@@ -7,39 +7,79 @@ import {
     ActivityIndicator,
     Alert,
     Platform,
+    KeyboardAvoidingView,
 } from 'react-native'
 import Purchases from 'react-native-purchases'
 import { LangApp } from '../../components/Language'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { connect } from 'react-redux'
+import apiConstant from '../../helpers/dataApi/apiConstant'
+import { GetAxios } from '../../helpers/dataApi/crud'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import { Modal } from 'react-native-paper'
+import TextInput from '../../components/TextInput'
 
 const APIKeys = {
     apple: 'appl_DMIkzFAHBAAkVwsdeTjaNnWZKYX',
     google: 'goog_OfndwmvoPjhIPGFfcHLzfGuYPIR',
 }
 
-const RemoveAdsSubscription = ({ navigation, start }) => {
+const RemoveAdsSubscription = ({ navigation, start, UserData }) => {
     const [loading, setLoading] = useState(true)
     const [subscriptionPackage, setSubscriptionPackage] = useState(null)
     const [purchasing, setPurchasing] = useState(false)
     const [resetting, setResetting] = useState(false)
     const [backgroundPlayControl, setBackgroundPlayControl] = useState("true")
+    const [userd, setUserd] = useState({})
+    const [modalOpen, setModalOpen] = useState(false)
+    const [userName, setUserName] = useState()
+    const [logout, setLogout] = useState(0)
+
+
     useEffect(() => {
-      const getBackgroundPlayControl = async () => {
-  
-        const bc = await AsyncStorage.getItem("backgroundPlay")
-        setBackgroundPlayControl(bc)
-      } 
-      getBackgroundPlayControl()
+
+        const getBackgroundPlayControl = async () => {
+
+            const bc = await AsyncStorage.getItem("backgroundPlay")
+            setBackgroundPlayControl(bc)
+        }
+        getBackgroundPlayControl()
     }, [])
     useEffect(() => {
         setupRevenueCat()
         console.log("start", start)
-     
+
         return () => {
             // Cleanup if needed
         }
     }, [])
+    useEffect(() => {
+        userData()
+    }, [])
+    const userData = async () => {
 
+        var endpoint = await apiConstant.BaseUrl + `/api/usermanager/GetCurrentMobilUser`
+        var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
+        setUserd(rps.data)
+        setUserName(rps.data.phoneNumber)
+
+
+    }
+
+
+    const updateUsernName = async () => {
+
+        var endpoint = await apiConstant.BaseUrl + `/api/usermanager/UpdatePhoneNoeMail`
+        var rps = await GetAxios(endpoint + "/username/" + userName).then(x => { return x.data }).catch(x => { return x });
+        console.log("das", userName)
+
+        if (rps.isError == true) {
+            alert("Bu Kullanıcı adı zaten var. Başka isim deneyiniz.")
+        } else {
+            globalThis.__START_APP()
+        }
+
+    }
     const setupRevenueCat = async () => {
         try {
             if (Platform.OS === 'android') {
@@ -307,7 +347,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
         return (
             <View style={styles.container}>
                 <Text style={styles.errorText}>Paket bulunamadı</Text>
-                <TouchableOpacity  delayLongPress={()=>{return true}  }  
+                <TouchableOpacity delayLongPress={() => { return true }}
                     style={styles.button}
                     onPress={() => navigation.goBack()}
                 >
@@ -319,8 +359,40 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.content}>
-                <Text style={styles.title}>Reklamsız/Premium</Text>
+
+            <View style={{
+                backgroundColor: "#E1F5FE", padding: 10, paddingLeft: 30, paddingRight: 30, marginBottom: 10,
+                borderWidth: 1,
+                borderRadius: 9,
+                borderColor: "#29B6F6"
+            }}>
+                <Text style={{ fontWeight: "bold", fontSize: 20, textAlign: "center" }}>Kullanıcı Adı </Text>
+                <Text style={{ textAlign: "center", marginTop: 5 }}>
+                    <TouchableOpacity onPress={() => { setModalOpen(true) }} style={{ flexDirection: "row", marginTop: 1, justifyContent: "center", alignItems: "center" }}>
+
+                        <Text style={{ fontSize: 20 }}> {userd.phoneNumber}  </Text>
+                        <Text style={{ marginTop: 1, backgroundColor: "#03A9F4", padding: 5, borderRadius: 10 }}>
+                            <MaterialCommunityIcons name="account-edit" size={20} color="white" />
+                        </Text>
+                    </TouchableOpacity>
+                </Text>
+            </View>
+            <View style={styles.content} >
+                <Text onPress={() => {
+                    if (logout > 7) {
+
+                        (async () => {
+                            setLogout(0)
+                            var tkn = await AsyncStorage.removeItem("hlcapptokengDua").then(x => { return x })
+                            globalThis.__START_APP()
+                        })()
+
+                    } else {
+                        setLogout(logout + 1)
+                    }
+
+
+                }} style={styles.title}>Reklamsız/Premium</Text>
                 <Text style={styles.description}>
                     Tüm reklamları kaldırın ve kesintisiz deneyim yaşayın.
                 </Text>
@@ -331,7 +403,7 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                         <Text style={styles.featureBullet}>•</Text>
                         <Text style={styles.featureText}>Tüm reklamlar kaldırılır</Text>
                     </View>
-                {backgroundPlayControl == "false" && <View style={styles.featureItem}>
+                    {backgroundPlayControl == "false" && <View style={styles.featureItem}>
                         <Text style={styles.featureBullet}>•</Text>
                         <Text style={styles.featureText}>Uygulama arka plandayken dinleme özelliği</Text>
                     </View>}
@@ -339,19 +411,19 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
 
                 <View style={styles.packageContainer}>
                     <Text style={styles.packageTitle}>
-                        {subscriptionPackage?.product?.title || subscriptionPackage?.identifier || 'Reklamsız/Premium'}
+                        {subscriptionPackage.product.description}
                     </Text>
-                    {subscriptionPackage?.product?.description && (
+                    {/* {subscriptionPackage?.product?.description && (
                         <Text style={styles.packageDescription}>
                             {subscriptionPackage.product.description}
                         </Text>
-                    )}
+                    )} */}
                     <Text style={styles.packagePrice}>
                         {subscriptionPackage?.product?.priceString || 'Fiyat bilgisi yükleniyor...'}
                     </Text>
                 </View>
 
-                <TouchableOpacity  delayLongPress={()=>{return true}  }  
+                <TouchableOpacity delayLongPress={() => { return true }}
                     style={[styles.purchaseButton, purchasing && styles.purchaseButtonDisabled]}
                     onPress={handlePurchase}
                     disabled={purchasing}
@@ -368,8 +440,8 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                     edebilirsiniz.
                 </Text>
 
-                <TouchableOpacity  delayLongPress={()=>{return true}  }  
-                    style={[styles.resetButton, resetting && styles.resetButtonDisabled,{display: 'none'}]}
+                <TouchableOpacity delayLongPress={() => { return true }}
+                    style={[styles.resetButton, resetting && styles.resetButtonDisabled, { display: 'none' }]}
                     onPress={handleResetSubscription}
                     disabled={resetting}
                 >
@@ -380,6 +452,54 @@ const RemoveAdsSubscription = ({ navigation, start }) => {
                     )}
                 </TouchableOpacity>
             </View>
+
+
+
+
+            <Modal visible={modalOpen} transparent animationType="fade">
+                <View style={{ flex: 1, justifyContent: "center", flexDirection: "column", alignContent: "center", alignItems: "center" }}>
+                    <View style={{
+                        backgroundColor: "white", width: "90%", height: 200, justifyContent: "center",
+                        alignContent: "center"
+                        , alignItems: "center"
+                    }}>
+
+                        <Text style={{ fontWeight: "bold", fontSize: 16 }}>Kullanıcı Adını Değiştir</Text>
+                        <TextInput
+                            onChangeText={(text) => {
+
+                                setUserName(text)
+                            }}
+
+                            label="Kullanıcı Adınız" style={{ width: "90%", marginLeft: 10 }} value={userName}>
+
+                        </TextInput>
+                        <TouchableOpacity onPress={() => { updateUsernName() }} style={{ borderWidth: 1, borderColor: "#03A9F4", borderRadius: 10, backgroundColor: "#a5e0fcff", width: 200, height: 40, flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                            <Text style={{ fontWeight: "bold" }}>
+                                Değiştir
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => { setModalOpen(false) }} style={{
+                            position: "absolute",
+                            backgroundColor: "red",
+                            justifyContent: "center",
+                            flexDirection: "row",
+
+                            width: 40, height: 40,
+                            top: -10,
+                            right: -10,
+                            borderRadius: 50,
+                            paddingTop: 4
+
+                        }}>
+                            <Text style={{ fontWeight: "bold", fontSize: 20, color: "white" }}>x</Text>
+                        </TouchableOpacity>
+                    </View>
+
+
+                </View>
+            </Modal>
+
         </View>
     )
 }
@@ -510,7 +630,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 8,
         padding: 16,
-        marginBottom: 24,
+        marginBottom: 10,
         borderWidth: 1,
         borderColor: '#C8E6C9',
     },
@@ -539,5 +659,17 @@ const styles = StyleSheet.create({
     },
 })
 
-export default RemoveAdsSubscription
+const mapStateToProps = (state) => {
+    return {
+        UserData: state
+    }
+}
+const mapDispatchToProps = (dispatch) => {
+
+    return {
+
+        changeUser: (data) => dispatch({ type: "UserData", payload: data })
+    }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(RemoveAdsSubscription);
 

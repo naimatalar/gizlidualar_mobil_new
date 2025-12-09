@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "852786588232",
+    "project_id": "gizlidualar-bc87d",
+    "storage_bucket": "gizlidualar-bc87d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852786588232:android:7a278e7cc2080e71b8467d",
+        "android_client_info": {
+          "package_name": "com.gizldualarapplication.gizlidualar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7yFrooXlYqCuRnzJq7KWBuJDsNHUlqkk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

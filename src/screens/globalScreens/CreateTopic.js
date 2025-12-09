@@ -30,7 +30,8 @@ function CreateTopic(props) {
       const endpoint = apiConstant.BaseUrl + '/api/topic/Create'
       const response = await PostAxios(endpoint, {
         title: title.trim(),
-        description: description.trim()
+        description: description.trim(),
+        isConfess:props.IsConfess||false
       })
 
       console.log('CreateTopic Response:', JSON.stringify(response.data, null, 2))
@@ -88,14 +89,14 @@ function CreateTopic(props) {
       <LinearGradient
         start={{ x: 0.2, y: 0.3 }}
         style={{ padding: 15, width: '100%' }}
-        colors={['#4c669f', 'transparent']}
+        colors={props.IsConfess!=true&&['#4c669f', 'transparent']||['#9f4c4cff', 'transparent']}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => props.navigation.goBack()} style={{ marginRight: 15 }}>
             <MaterialCommunityIcons name="close" size={24} color="white" />
           </TouchableOpacity>
           <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>
-            {DeviceLanguage === 'ar' ? 'موضوع جديد' : 'Yeni Konu'}
+            {DeviceLanguage === 'ar' ? 'موضوع جديد' : props.IsConfess!=true&&'Yeni Konu'||"Yeni İtiraf"}
           </Text>
         </View>
       </LinearGradient>
@@ -116,14 +117,14 @@ function CreateTopic(props) {
           onChangeText={setDescription}
           placeholder={DeviceLanguage === 'ar' ? 'أدخل المحتوى' : 'İçerik'}
           multiline
-          rows={3}
+          
           
           style={{ 
-            minHeight: 80, 
+         
             textAlignVertical: 'top',
             paddingTop: 15,
             paddingBottom: 15,
-            height: 110,
+            
           }}
         />
 
@@ -156,7 +157,7 @@ function CreateTopic(props) {
             disabled={loading}
             style={{
               flex: 1,
-              backgroundColor: '#4c669f',
+              backgroundColor: props.IsConfess!=true&&'#4c669f'||"#9f4c4cff",
               paddingVertical: 15,
               borderRadius: 8,
               alignItems: 'center',

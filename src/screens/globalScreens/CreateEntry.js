@@ -10,7 +10,7 @@ import { DeviceLanguage, LangApp } from '../../components/Language'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
 function CreateEntry(props) {
-  const { topicId, parentEntryId, parentEntryContent } = props.route.params || {}
+  const { topicId, itemId, parentEntryId, parentEntryContent } = props.route.params || {}
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -22,12 +22,27 @@ function CreateEntry(props) {
 
     try {
       setLoading(true)
-      const endpoint = apiConstant.BaseUrl + '/api/entry/Create'
-      const response = await PostAxios(endpoint, {
-        topicId: topicId,
-        content: content.trim(),
-        parentEntryId: parentEntryId || null
-      })
+      
+      // itemId varsa Discover için, topicId varsa Topic/Confess için
+      let endpoint, payload
+      if (itemId) {
+        // TODO: Backend'de bu endpoint oluşturulacak
+        endpoint = apiConstant.BaseUrl + '/api/discover/CreateEntry'
+        payload = {
+          itemId: itemId,
+          content: content.trim(),
+          parentEntryId: parentEntryId || null
+        }
+      } else {
+        endpoint = apiConstant.BaseUrl + '/api/entry/Create'
+        payload = {
+          topicId: topicId,
+          content: content.trim(),
+          parentEntryId: parentEntryId || null
+        }
+      }
+      
+      const response = await PostAxios(endpoint, payload)
 
       console.log('CreateEntry Response:', JSON.stringify(response.data, null, 2))
 
@@ -83,7 +98,7 @@ function CreateEntry(props) {
       <LinearGradient
         start={{ x: 0.2, y: 0.3 }}
         style={{ padding: 15, width: '100%' }}
-        colors={['#4c669f', 'transparent']}
+        colors={props.IsConfess!=true&&['#4c669f', 'transparent']||['#9f4c4cff', 'transparent']}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity onPress={() => props.navigation.goBack()} style={{ marginRight: 15 }}>
@@ -96,7 +111,7 @@ function CreateEntry(props) {
                 : 'Cevap Yaz'
               : DeviceLanguage === 'ar'
               ? 'كتابة جديدة'
-              : 'Yeni Yazı'}
+              : 'Yeni Yorum'}
           </Text>
         </View>
       </LinearGradient>
@@ -125,15 +140,16 @@ function CreateEntry(props) {
         <TextInput
           label={DeviceLanguage === 'ar' ? 'المحتوى' : 'İçerik'}
           value={content}
+          
           onChangeText={setContent}
           placeholder={
             DeviceLanguage === 'ar'
               ? 'أدخل محتوى الرد'
               : 'Yazınızı buraya girin'
           }
-          multiline
-          numberOfLines={10}
-          style={{ height : 150, textAlignVertical: 'top' }}
+          multiline={true}
+          
+          inputStyle={{ ninHeight:150,  border:"none",textAlignVertical: 'top' }}
         />
 
         <View style={{ flexDirection: 'row', marginTop: 10, justifyContent: 'space-between' }}>
@@ -165,7 +181,7 @@ function CreateEntry(props) {
             disabled={loading}
             style={{
               flex: 1,
-              backgroundColor: '#4c669f',
+              backgroundColor: props.IsConfess!=true&& '#4c669f'||"#9f4c4cff",
               paddingVertical: 15,
               borderRadius: 8,
               alignItems: 'center',

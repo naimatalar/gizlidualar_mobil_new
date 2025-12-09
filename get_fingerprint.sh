@@ -55,3 +55,5 @@ echo "Keystore'dan fingerprint çıkarmak için:"
 echo "keytool -list -v -keystore credentials/android/keystore.jks"
 echo ""
 
+
+

@@ -136,9 +136,9 @@ function TopicsList(props) {
             alignItems: 'center'
           }}
         >
-          <MaterialCommunityIcons name="plus" size={20} color="#4c669f" />
+          <MaterialCommunityIcons name="pencil" size={20} color="#4c669f" />
           <Text style={{ color: '#4c669f', fontWeight: 'bold', marginLeft: 5 }}>
-            {DeviceLanguage === 'ar' ? 'جديد' : 'Yeni'}
+            {DeviceLanguage === 'ar' ? 'جديد' : 'Yeni Konu Yaz'}
           </Text>
         </TouchableOpacity>
       </LinearGradient>

@@ -10,7 +10,7 @@ import { Platform, View, Text, StyleSheet, AppState } from 'react-native'
 import Pressability from 'react-native/Libraries/Pressability/Pressability'
 import Loading from './src/components/Loading'
 import './src/polyfills/backHandlerFix'
-import { navigate } from './src/navigation/navigationRef'
+import { navigate, navigateReset } from './src/navigation/navigationRef'
 import { Audio } from 'expo-av'
 import * as Notifications from 'expo-notifications'
 import mobileAds, { MaxAdContentRating, InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads'
@@ -116,6 +116,7 @@ useEffect(() => {
     var token = await GetAxios(apiConstant.BaseUrl + "/api/backgroundplaystatus/control").then(x => { return x }).catch(x => { return false })
  
     await AsyncStorage.setItem("backgroundPlay", token.data.toString())
+    
   }
   getToken()
 
@@ -225,7 +226,7 @@ useEffect(() => {
     }
   }, [])
 
-  const navigateToTopicDetail = (topicId, entryId) => {
+  const navigateToTopicDetail = (topicId, entryId,isConfess=false) => {
     if (!topicId) {
       console.warn('[Notification] topicId yok, default ekrana gidiliyor')
       navigate('OzelAlanim')
@@ -233,7 +234,7 @@ useEffect(() => {
     }
 
     const nestedParams = {
-      screen: 'TopicDetail',
+      screen: isConfess==true&&'ConfessDetail'|'TopicDetail',
       params: {
         topicId,
         targetEntryId: entryId || null,
@@ -244,6 +245,8 @@ useEffect(() => {
       '[Notification] TopicDetail yönlendirmesi',
       JSON.stringify({ topicId, entryId })
     )
+
+ 
 
     navigate('TopicsStack', nestedParams)
   }
@@ -265,7 +268,7 @@ useEffect(() => {
       notificationType === 'entry_comment' ||
       notificationType === 'entry_like'
     ) {
-      navigateToTopicDetail(data.topicId, data.entryId)
+      navigateToTopicDetail(data.topicId, data.entryId,data.isConfess)
     } else {
       // Diğer notification türleri için varsayılan sayfa
       navigate('OzelAlanim')

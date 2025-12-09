@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -136,11 +137,41 @@ const RuhHaliAyetleri = () => {
       setBackgroundPlayControl(bc)
     } 
     getBackgroundPlayControl()
-  }, [])
+  }, [backgroundPlayControl])
 
   function buildAudioUrl(fileName) {
     return fileName ? `${audioBaseUrl}${fileName}` : null
   }
+
+
+    useEffect(() => {
+      if (backgroundPlayControl == "false") {
+        
+        const subscription = AppState.addEventListener('change', async (nextAppState) => {
+          if (nextAppState === 'background' || nextAppState === 'inactive') {
+            // Abone değilse ses çalmayı durdur
+            
+            if (!hasSubscription) {
+              console.log(hasSubscription)
+              try {
+                const currentState = await getState()
+                if (currentState === State.Playing) {
+                  await pauseTrack()
+                  setCurrentPlaybackState(State.None)
+                  console.log('Arka plana geçildi, abone olmadığı için ses durduruldu')
+                }
+              } catch (error) {
+                console.warn('Background pause error', error)
+              }
+            }
+          }
+        }) 
+        return () => {
+        subscription?.remove()
+      }
+      }
+     
+    }, [hasSubscription,backgroundPlayControl])
   // TrackPlayer'ı başlat
   useEffect(() => {
     let isMounted = true

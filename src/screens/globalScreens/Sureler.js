@@ -14,7 +14,7 @@ import {
   UIManager,
   View,
 } from 'react-native'
-import { useNavigation } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import Purchases from 'react-native-purchases'
 import Slider from '@react-native-community/slider'
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
@@ -69,6 +69,7 @@ const Sureler = () => {
     const getBackgroundPlayControl = async () => {
 
       const bc = await AsyncStorage.getItem("backgroundPlay")
+    
       setBackgroundPlayControl(bc)
 
     }
@@ -129,6 +130,8 @@ const Sureler = () => {
     checkSubscription()
   }, [])
 
+  
+
   // AppState listener - Arka plana geçildiğinde abone değilse ses çalmayı durdur
   useEffect(() => {
     if (backgroundPlayControl == "false") {
@@ -136,11 +139,14 @@ const Sureler = () => {
       const subscription = AppState.addEventListener('change', async (nextAppState) => {
         if (nextAppState === 'background' || nextAppState === 'inactive') {
           // Abone değilse ses çalmayı durdur
+          
           if (!hasSubscription) {
+            console.log(hasSubscription)
             try {
               const currentState = await getState()
               if (currentState === State.Playing) {
                 await pauseTrack()
+                setCurrentPlaybackState(State.None)
                 console.log('Arka plana geçildi, abone olmadığı için ses durduruldu')
               }
             } catch (error) {
@@ -154,7 +160,7 @@ const Sureler = () => {
     }
     }
    
-  }, [hasSubscription])
+  }, [hasSubscription,backgroundPlayControl])
 
   // Playback state'i güncelle
   useEffect(() => {

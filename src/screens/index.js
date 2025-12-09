@@ -35,6 +35,10 @@ import CreateTopic from './globalScreens/CreateTopic';
 import CreateEntry from './globalScreens/CreateEntry';
 import { navigationRef, flushPendingNavigation } from '../navigation/navigationRef';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ConfessList from './globalScreens/ConfessList';
+import ConfessDetail from './globalScreens/ConfessDetail';
+import DiscoverList from './globalScreens/DiscoverList';
+import DiscoverDetail from './globalScreens/DiscoverDetail';
 
 // import { getLocales } from 'expo-localization';
 
@@ -62,7 +66,7 @@ export const infoButton = ({ navigation }) => {
 
       const customerInfo = await Purchases.getCustomerInfo()
       const isActive = customerInfo.entitlements.active['naim1016'] !== undefined
-      
+
       setHasSubscription(isActive)
       setLoading(false)
     } catch (error) {
@@ -102,7 +106,7 @@ export const infoButton = ({ navigation }) => {
     >
       {hasSubscription ? (
         <TouchableOpacity
-        delayLongPress={()=>{return true}  }  
+          delayLongPress={() => { return true }}
           onPress={() => {
             navigation.navigate('RemoveAds')
           }}
@@ -115,7 +119,7 @@ export const infoButton = ({ navigation }) => {
           }}
         >
           <MaterialCommunityIcons
-            name="check-circle"
+            name="account-edit"
             size={16}
             color="#2E7D32"
             style={{ marginRight: 6 }}
@@ -133,7 +137,7 @@ export const infoButton = ({ navigation }) => {
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
-        delayLongPress={()=>{return true}  }  
+          delayLongPress={() => { return true }}
           onPress={() => {
             navigation.navigate('RemoveAds')
           }}
@@ -148,15 +152,21 @@ export const infoButton = ({ navigation }) => {
             borderColor: '#6A1B9A',
           }}
         >
+
           <Text
             style={{
               color: '#6A1B9A',
               textAlign: 'center',
               fontSize: Platform.OS === 'ios' ? 10 : 13,
-              fontWeight: 'bold', 
+              fontWeight: 'bold',
             }}
-          >
-            Reklamsız/Premium
+          > <MaterialCommunityIcons
+              name="account-edit"
+              size={16}
+              color="#6A1B9A"
+              style={{ marginRight: 6 }}
+            />
+            Ayarlar/Premium
           </Text>
         </TouchableOpacity>
       )}
@@ -203,10 +213,10 @@ function SurelerStackScreen({ start }) {
         options={(e) => ({ headerRight: () => infoButton(e), title: LangApp("sureler") })}
         component={Sureler}
       />
-      <SurelerStack.Screen 
-        name="RemoveAds" 
-        options={{ title: "Reklamı Kaldır" }} 
-        component={(c) => <RemoveAdsSubscription {...c} start={start || (() => {})}></RemoveAdsSubscription>} 
+      <SurelerStack.Screen
+        name="RemoveAds"
+        options={{ title: "Reklamı Kaldır" }}
+        component={(c) => <RemoveAdsSubscription {...c} start={start || (() => { })}></RemoveAdsSubscription>}
       />
     </SurelerStack.Navigator>
   )
@@ -231,17 +241,18 @@ function TopicsStackScreen() {
     <TopicsStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
       <TopicsStack.Screen
         name="TopicsList"
-        options={(e) => ({ 
-          headerRight: () => infoButton(e), 
-          title: DeviceLanguage === 'ar' ? 'المواضيع' : 'Topluluk' 
+        options={(e) => ({
+          headerRight: () => infoButton(e),
+          title: DeviceLanguage === 'ar' ? 'المواضيع' : 'Topluluk'
         })}
         component={TopicsList}
       />
       <TopicsStack.Screen
         name="TopicDetail"
-        options={(e) => ({ 
-          headerRight: () => infoButton(e), 
-          title: DeviceLanguage === 'ar' ? 'تفاصيل الموضوع' : 'Konu Detayı' 
+        options={(e) => ({
+          headerLeft: (e) => { return <TouchableOpacity style={{ marginLeft: 10, padding: 10 }} onPress={() => { navigationRef.reset({ index: 0, routes: [{ name: 'TopicsList' }] }) }}><MaterialCommunityIcons name="arrow-left" size={24} color="black" /></TouchableOpacity> },
+          headerRight: () => infoButton(e),
+          title: DeviceLanguage === 'ar' ? 'تفاصيل الموضوع' : 'Konu Detayı'
         })}
         component={TopicDetail}
       />
@@ -260,7 +271,70 @@ function TopicsStackScreen() {
 }
 
 
+const ConfessStack = createStackNavigator();
+function ConfessStackScreen() {
+  return (
+    <ConfessStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
+      <ConfessStack.Screen
+        name="ConfessList"
+        options={(e) => ({
+          headerRight: () => infoButton(e),
+          title: DeviceLanguage === 'ar' ? 'المواضيع' : 'İtiraflar'
+        })}
+        component={ConfessList}
+      />
+      <ConfessStack.Screen
+        name="ConfessDetail"
+        options={(e) => ({
+          headerLeft: (e) => { return <TouchableOpacity style={{ marginLeft: 10, padding: 10 }} onPress={() => { navigationRef.reset({ index: 0, routes: [{ name: 'ConfessList' }] }) }}><MaterialCommunityIcons name="arrow-left" size={24} color="black" /></TouchableOpacity> },
+          headerRight: () => infoButton(e),
+          title: DeviceLanguage === 'ar' ? 'تفاصيل الموضوع' : 'İtiraf İçeriği'
+        })}
+        component={ConfessDetail}
+      />
+      <ConfessStack.Screen
+        name="CreateTopic"
+        options={{ title: DeviceLanguage === 'ar' ? 'موضوع جديد' : 'Yeni İtiraf Yaz' }}
+        component={CreateTopic}
+      />
+      <ConfessStack.Screen
+        name="CreateEntry"
+        options={{ title: DeviceLanguage === 'ar' ? 'كتابة جديدة' : 'Yeni İtiraf Yaz' }}
+        component={CreateEntry}
+      />
+    </ConfessStack.Navigator>
+  )
+}
 
+const DiscoverStack = createStackNavigator();
+function DiscoverStackScreen() {
+  return (
+    <DiscoverStack.Navigator screenOptions={{ headerBackTitle: LangApp("geri") }}>
+      <DiscoverStack.Screen
+        name="DiscoverList"
+        options={(e) => ({
+          headerRight: () => infoButton(e),
+          title: DeviceLanguage === 'ar' ? 'اكتشف' : 'Akış'
+        })}
+        component={DiscoverList}
+      />
+      <DiscoverStack.Screen
+        name="DiscoverDetail"
+        options={(e) => ({
+          headerLeft: (e) => { return <TouchableOpacity style={{ marginLeft: 10, padding: 10 }} onPress={() => { navigationRef.reset({ index: 0, routes: [{ name: 'DiscoverList' }] }) }}><MaterialCommunityIcons name="arrow-left" size={24} color="black" /></TouchableOpacity> },
+          headerRight: () => infoButton(e),
+          title: DeviceLanguage === 'ar' ? 'تفاصيل المحتوى' : 'İçerik Detayı'
+        })}
+        component={DiscoverDetail}
+      />
+      <DiscoverStack.Screen
+        name="CreateEntry"
+        options={{ title: DeviceLanguage === 'ar' ? 'كتابة جديدة' : 'Yeni Yorum' }}
+        component={CreateEntry}
+      />
+    </DiscoverStack.Navigator>
+  )
+}
 
 
 const SginInStack = createStackNavigator();
@@ -290,10 +364,10 @@ function USerStackStackScreen({ setCoin, start }) {
     <UserStack.Navigator screenOptions={{ headerBackTitle: "Geri" }}>
       <UserStack.Screen name="Profile" options={(e) => ({ title: "Profil", headerRight: () => infoButton(e) })} component={(c) => <User {...c} start={start}></User>} />
       <HomeStack.Screen name="Steps" options={(e) => ({ title: "Dua Adımları", headerRight: () => infoButton(e) })} component={(c) => <Steps {...c} setCoin={setCoin}></Steps>} />
-      <UserStack.Screen 
-        name="RemoveAds" 
-        options={{ title: "Reklamı Kaldır" }} 
-        component={(c) => <RemoveAdsSubscription {...c} start={start || (() => {})}></RemoveAdsSubscription>} 
+      <UserStack.Screen
+        name="RemoveAds"
+        options={{ title: "Reklamı Kaldır" }}
+        component={(c) => <RemoveAdsSubscription {...c} start={start || (() => { })}></RemoveAdsSubscription>}
       />
     </UserStack.Navigator>
   );
@@ -355,6 +429,12 @@ export default function Index({ startBase }) {
 
       setCoin(rps.data)
 
+    } else {
+      var endpoint = await apiConstant.BaseUrl + `/api/usermanager/loginorcreate/`
+      var rps = await GetAxios(endpoint).then(x => { return x.data }).catch(x => { return x });
+      await AsyncStorage.setItem("hlcapptokengDua", rps.data.token)
+      start()
+
     }
 
 
@@ -389,7 +469,7 @@ export default function Index({ startBase }) {
   const store = createStore(userReduccer);
 
   // Reklam gösterilmeyecek sayfalar
-  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile','HomeStack','Steps','Detail','CategoryDetail',"OzelAlanim","Home","RemoveAds","TopicsStack","TopicsList","TopicDetail","CreateTopic","CreateEntry"]
+  const excludedRoutes = ['SignIn', 'RemoveAdsSubscription', 'Coin', 'Profile', 'HomeStack', 'Steps', 'Detail', 'CategoryDetail', "OzelAlanim", "Home", "RemoveAds", "TopicsStack", "TopicsList", "TopicDetail", "CreateTopic", "CreateEntry"]
 
   const handleNavigationStateChange = (state) => {
     if (!state) return
@@ -429,8 +509,8 @@ export default function Index({ startBase }) {
   return (
     <Provider store={store}>
 
-      <NavigationContainer 
-        ref={navigationRef} 
+      <NavigationContainer
+        ref={navigationRef}
         onReady={flushPendingNavigation}
         onStateChange={handleNavigationStateChange}
       >
@@ -438,14 +518,14 @@ export default function Index({ startBase }) {
 
           initialRouteName="HomeStack"
           screenOptions={({ route }) => ({
-          tabBarStyle: {
-            backgroundColor: '#F5F5F5',
-            borderTopWidth: 1,
-            borderTopColor: '#E0E0E0',
-            height: (Platform.OS === 'ios' ? 85 : 60) + insets.bottom,
-            paddingBottom: (Platform.OS === 'ios' ? 25 : 8) + insets.bottom,
-            paddingTop: 8,
-          },
+            tabBarStyle: {
+              backgroundColor: '#F5F5F5',
+              borderTopWidth: 1,
+              borderTopColor: '#E0E0E0',
+              height: (Platform.OS === 'ios' ? 85 : 60) + insets.bottom,
+              paddingBottom: (Platform.OS === 'ios' ? 25 : 8) + insets.bottom,
+              paddingTop: 8,
+            },
             tabBarActiveTintColor: '#1976D2',
             tabBarInactiveTintColor: '#757575',
             tabBarIcon: ({ focused, color, size }) => {
@@ -480,6 +560,10 @@ export default function Index({ startBase }) {
                 iconName = focused ? 'hands-pray' : 'hands-pray';
               } else if (route.name === 'TopicsStack') {
                 iconName = focused ? 'message-text' : 'message-text-outline';
+              } else if (route.name === 'ConfessStack') {
+                iconName = focused ? 'hand-back-left' : 'hand-back-left-outline';
+              } else if (route.name === 'DiscoverStack') {
+                iconName = focused ? 'compass' : 'compass-outline';
               }
 
               let sty = {}
@@ -585,7 +669,28 @@ export default function Index({ startBase }) {
                   incSize = 42
                 }
               }
-
+              if (route.name === 'ConfessStack') {
+                sty = { backgroundColor: "#f8ceceff", width: 48, height: 48, marginTop: 5, borderRadius: 50, justifyContent: "center", alignItems: "center" }
+                if (focused) {
+                  sty.marginTop = 1
+                  sty.borderWidth = 1
+                  sty.borderColor = "#558B2F"
+                  sty.width = 60
+                  sty.height = 60
+                  incSize = 42
+                }
+              }
+              if (route.name === 'DiscoverStack') {
+                sty = { backgroundColor: "#E3F2FD", width: 48, height: 48, marginTop: 5, borderRadius: 50, justifyContent: "center", alignItems: "center" }
+                if (focused) {
+                  sty.marginTop = 1
+                  sty.borderWidth = 1
+                  sty.borderColor = "#1976D2"
+                  sty.width = 60
+                  sty.height = 60
+                  incSize = 42
+                }
+              }
 
 
 
@@ -625,17 +730,29 @@ export default function Index({ startBase }) {
           {/* <Tab.Screen options={{ tabBarLabel: "", title: "Dualar", headerShown: false }} name="BanaOzel" component={(c) => <BanOzelScreen setCoin={setCoin} {...c}></BanOzelScreen>} /> */}
 
           <Tab.Screen options={{ tabBarLabel: "", headerShown: false, title: LangApp("gd") }} name="HomeStack" component={(c) => <HomeStackScreen {...c} start={start} setCoin={setCoin}></HomeStackScreen>} />
-          <Tab.Screen 
-            options={{ tabBarLabel: "", headerShown: false, title: DeviceLanguage === 'ar' ? 'المنتدى' : 'Topluluk' }} 
-            name="TopicsStack" 
-            component={(c) => <TopicsStackScreen {...c}></TopicsStackScreen>} 
+          <Tab.Screen
+            options={{ tabBarLabel: "", headerShown: false, title: DeviceLanguage === 'ar' ? 'المنتدى' : 'Topluluk' }}
+            name="TopicsStack"
+            component={(c) => <TopicsStackScreen {...c}></TopicsStackScreen>}
           />
-          {!isLogin && <Tab.Screen options={{ tabBarLabel: "", title: LangApp("uyeGiris") }} name="SignIn" component={() => <SginInStackStackScreen isLogin={isLogin} start={startBase}></SginInStackStackScreen>} />
-          }
+          <Tab.Screen
+            options={{ tabBarLabel: "", headerShown: false, title: DeviceLanguage === 'ar' ? 'المنتدى' : 'Topluluk' }}
+            name="ConfessStack"
+            component={(c) => <ConfessStackScreen {...c}></ConfessStackScreen>}
+          />
+          <Tab.Screen
+            options={{ tabBarLabel: "", headerShown: false, title: DeviceLanguage === 'ar' ? 'اكتشف' : 'Akış' }}
+            name="DiscoverStack"
+            component={(c) => <DiscoverStackScreen {...c}></DiscoverStackScreen>}
+          />
 
 
-          {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Profil", headerShown: false }} name="Profile" component={() => <USerStackStackScreen start={startBase} setCoin={setCoin}></USerStackStackScreen>} />
-          }
+          {/*!isLogin && <Tab.Screen options={{ tabBarLabel: "", title: LangApp("uyeGiris") }} name="SignIn" component={() => <SginInStackStackScreen isLogin={isLogin} start={startBase}></SginInStackStackScreen>} />
+          */}
+
+
+          {/*isLogin && <Tab.Screen options={{ tabBarLabel: "", title: "Profil", headerShown: false }} name="Profile" component={() => <USerStackStackScreen start={startBase} setCoin={setCoin}></USerStackStackScreen>} />
+          */}
           {/* {isLogin && <Tab.Screen options={{ tabBarLabel: "", title: LangApp("anahtar") , headerShown: false, tabBarBadge: coin, tabBarBadgeStyle: coinBadgeStyle }} name="Coin" component={() => <CoinStackStackScreen setCoin={setCoin} start={start} isLogin={isLogin}></CoinStackStackScreen>} />
           } */}
 

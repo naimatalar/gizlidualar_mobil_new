@@ -7,10 +7,11 @@ export default function TextInput({ errorText, description, ...props }) {
   return (
     <View style={styles.container}>
       <Input
-        style={styles.input}
+        style={[styles.input,props.inputStyle]}
         selectionColor={theme.colors.primary}
         underlineColor="transparent"
         mode="outlined"
+        
         {...props}
       />
       {description && !errorText ? (

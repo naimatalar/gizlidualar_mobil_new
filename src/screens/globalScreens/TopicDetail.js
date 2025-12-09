@@ -660,7 +660,7 @@ function TopicDetail(props) {
                 marginLeft: 8
               }}
             >
-              {DeviceLanguage === 'ar' ? 'الردود' : 'Cevaplar'}
+              {DeviceLanguage === 'ar' ? 'الردود' : 'Yorumlar'}
             </Text>
             {entryTotalCount > 0 && (
               <View
