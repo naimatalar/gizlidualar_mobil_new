@@ -234,7 +234,7 @@ useEffect(() => {
     }
 
     const nestedParams = {
-      screen: isConfess==true&&'ConfessDetail'|'TopicDetail',
+      screen: isConfess==true?'ConfessDetail':'TopicDetail',
       params: {
         topicId,
         targetEntryId: entryId || null,
@@ -248,7 +248,30 @@ useEffect(() => {
 
  
 
-    navigate('TopicsStack', nestedParams)
+    navigate(isConfess==true?'ConfessStack':'TopicsStack', nestedParams)
+  }
+
+  const navigateToDiscoverDetail = (itemId, entryId) => {
+    if (!itemId) {
+      console.warn('[Notification] itemId yok, default ekrana gidiliyor')
+      navigate('OzelAlanim')
+      return
+    }
+
+    const nestedParams = {
+      screen: 'DiscoverDetail',
+      params: {
+        itemId,
+        targetEntryId: entryId || null,
+      },
+    }
+
+    console.log(
+      '[Notification] DiscoverDetail yönlendirmesi',
+      JSON.stringify({ itemId, entryId })
+    )
+
+    navigate('DiscoverStack', nestedParams)
   }
 
   // Notification'a tıklandığında yönlendirme yap
@@ -262,12 +285,23 @@ useEffect(() => {
 
     const notificationType = data.type
 
-    // Entry veya beğeni notification'ları için TopicDetail'e git
+    // Discover (Akış) sayfası için notification'lar
     if (
+      notificationType === 'discover_entry_reply' ||
+      notificationType === 'discover_entry_comment' ||
+      notificationType === 'discover_entry_like' ||
+      (data.itemId || data.discoverId)
+    ) {
+      const itemId = data.itemId || data.discoverId
+      navigateToDiscoverDetail(itemId, data.entryId)
+    }
+    // Entry veya beğeni notification'ları için TopicDetail'e git
+    else if (
       notificationType === 'entry_reply' ||
       notificationType === 'entry_comment' ||
       notificationType === 'entry_like'
     ) {
+      
       navigateToTopicDetail(data.topicId, data.entryId,data.isConfess)
     } else {
       // Diğer notification türleri için varsayılan sayfa

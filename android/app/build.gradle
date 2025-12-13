@@ -92,8 +92,8 @@ android {
         applicationId 'com.gizldualarapplication.gizlidualar'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 62
-        versionName "3.6.2"
+        versionCode 63
+        versionName "3.6.3"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

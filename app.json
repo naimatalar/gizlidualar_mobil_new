@@ -2,7 +2,7 @@
   "expo": {
     "name": "Gizli Dualar",
     "slug": "gizli-dualar",
-    "version": "3.6.2",
+    "version": "3.6.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gizldualarapplication.gizlidualar",
-      "buildNumber": "62",
+      "buildNumber": "63",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ExpoLocalization_supportsRTL": true,
@@ -30,7 +30,7 @@
       }
     },
       "android": {
-      "versionCode": 62,
+      "versionCode": 63,
       "targetSdkVersion": 35,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
